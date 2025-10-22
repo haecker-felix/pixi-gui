@@ -1,0 +1,133 @@
+[workspace]
+authors = ["Felix Häcker <felix@prefix.dev>"]
+channels = ["https://prefix.dev/conda-forge"]
+name = "pixi-gui"
+platforms = ["osx-arm64", "linux-64", "win-64", "osx-64"]
+preview = ["pixi-build"]
+
+[workspace.target.win.build-variants]
+c_compiler = ["vs2019"]
+
+[system-requirements]
+libc = "2.34"
+
+[activation.env]
+RUSTC_WRAPPER = "sccache"
+
+#
+# Feature: Default
+#
+
+[dependencies]
+compilers = ">=1.11.0,<2"
+pnpm = ">=10.15.0,<11"
+rust = ">=1.92,<1.93"
+rust-src = ">=1.92,<1.93"
+sccache = ">=0.12,<0.13"
+tauri = ">=2.9.2,<3"
+
+[target.linux-64.dependencies]
+cairo = ">=1.18.4,<2"
+expat = ">=2.7.1,<3"
+fontconfig = ">=2.15.0,<3"
+gdk-pixbuf = ">=2.42.12,<3"
+glib = ">=2.84.3,<3"
+gtk3 = ">=3.24.43,<4"
+pango = ">=1.56.4,<2"
+pkg-config = ">=0.29.2,<0.30"
+"webkit2gtk4.1" = ">=2.48.5,<3"
+xorg-xorgproto = ">=2025.1,<2026"
+zlib = ">=1.3.1,<2"
+
+[tasks]
+app = { cmd = "pnpm tauri dev", depends-on = ["frontend-install-deps"] }
+frontend-install-deps = "pnpm install"
+react-devtools = { cmd = "pnpm react-devtools", depends-on = [
+  "frontend-install-deps",
+], env = { HOST = "localhost" } }
+
+#
+# Feature: Lint
+#
+
+[feature.lint.dependencies]
+actionlint = ">=1.7.9,<2"
+cargo-deny = ">=0.19,<0.20"
+lefthook = ">=2.0.1,<3"
+mypy = ">=1.17.1,<2"
+ruff = ">=0.14,<0.15"
+shellcheck = ">=0.10.0,<0.11"
+taplo = ">=0.10.0,<0.11"
+typos = ">=1.36.1,<2"
+
+[feature.lint.tasks]
+lefthook = { cmd = "lefthook", description = "Run lefthook" }
+pre-commit-install = "lefthook install"
+pre-commit-install-minimal = "lefthook install pre-commit"
+
+# Backend
+backend-format = "cargo fmt --manifest-path src-tauri/Cargo.toml --all"
+backend-lint = "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --workspace -- -D warnings"
+
+# Frontend
+frontend-format = { cmd = "pnpm exec prettier . --write" }
+frontend-lint = { cmd = "pnpm exec eslint . --fix --max-warnings=0 ", depends-on = [
+  "frontend-install-deps",
+] }
+
+# Other
+actionlint = { cmd = "actionlint" }
+cargo-deny = "cargo deny --manifest-path src-tauri/Cargo.toml check license --deny warnings"
+license-check = { cmd = "pnpm license-checker --onlyAllow 'Apache-2.0;BSD-3-Clause;MIT;ISC'", depends-on = [
+  "frontend-install-deps",
+] }
+python-typecheck = "mypy ./scripts"
+ruff-format = "ruff format --exit-non-zero-on-format --force-exclude"
+ruff-lint = "ruff check --fix --exit-non-zero-on-fix --force-exclude"
+toml-format = { cmd = "taplo fmt *.toml src-tauri/*.toml", env = { RUST_LOG = "warn" } }
+toml-lint = "taplo lint *.toml src-tauri/*.toml --verbose"
+typos = "typos --force-exclude"
+
+# Combined
+lint = { depends-on = [
+  "frontend-install-deps",
+  "lint-fast",
+  "lint-slow",
+], description = "Run all linters and formatters on all code" }
+lint-fast = { cmd = "lefthook run pre-commit --all-files --force", description = "Run all fast linters and formatters on all code (no clippy)" }
+lint-slow = { cmd = "lefthook run pre-push --all-files --force", description = "Run all slow linters and formatters on all code" }
+
+#
+# Feature: Packaging
+#
+
+[feature.packaging.dependencies]
+python = ">=3.14,<3.15"
+rattler-build = ">=0.55,<0.56"
+
+[feature.packaging.tasks]
+build-package = "python scripts/build_package.py"
+upload-package = "python scripts/upload_package.py"
+
+#
+# Environments
+#
+
+[environments]
+default = ["lint"]
+packaging = { features = ["packaging"], no-default-feature = true }
+
+#
+# Packaging / Pixi Build
+#
+
+[package]
+name.workspace = true
+
+[package.build.backend]
+channels = [
+  "https://prefix.dev/pixi-build-backends",
+  "https://prefix.dev/conda-forge",
+]
+name = "pixi-build-rattler-build"
+version = "*"

@@ -1,0 +1,55 @@
+[package]
+edition = "2024"
+name = "pixi-gui"
+publish = false
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+crate-type = ["staticlib", "cdylib", "rlib"]
+name = "pixi_gui_lib"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+dunce = "1.0"
+indexmap = "2"
+log = "0.4"
+miette = "7"
+notify = "8"
+notify-debouncer-full = "0.6"
+percent-encoding = "2"
+pixi_api = { package = "pixi_api", git = "https://github.com/prefix-dev/pixi" }
+portable-pty = "0.9"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+strip-ansi-escapes = "0.2"
+tauri = { version = "2", features = ["devtools"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-log = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-store = "2"
+tokio = { version = "1.47" }
+uuid = { version = "1.18", features = ["v4"] }
+which = "8.0.0"
+
+[patch.crates-io]
+# This is a temporary patch to get `cargo vendor` to work with the `uv` and pep508_rs` crates.
+reqwest-middleware = { git = "https://github.com/astral-sh/reqwest-middleware", rev = "7650ed76215a962a96d94a79be71c27bffde7ab2" }
+reqwest-retry = { git = "https://github.com/astral-sh/reqwest-middleware", rev = "7650ed76215a962a96d94a79be71c27bffde7ab2" }
+version-ranges = { git = "https://github.com/astral-sh/pubgrub", rev = "d8efd77673c9a90792da9da31b6c0da7ea8a324b" }
+
+# Enable a small amount of optimization in the dev profile.
+[profile.dev]
+opt-level = 1
+
+# Enable a large amount of optimization in the dev profile for dependencies.
+[profile.dev.package."*"]
+opt-level = 3

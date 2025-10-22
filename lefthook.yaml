@@ -1,0 +1,81 @@
+lefthook: pixi run --no-progress lefthook
+
+templates:
+  run: run --quiet --no-progress
+
+colors: true
+
+output:
+  - meta
+  - summary
+  - empty_summary
+
+pre-commit:
+  parallel: true
+  jobs:
+    # Format
+    - name: format-backend
+      run: pixi {run} backend-format
+      glob: "*.{rs}"
+      stage_fixed: true
+
+    - name: format-frontend
+      run: pixi {run} frontend-format
+      glob: "*.{js,ts,tsx,css,json}"
+      stage_fixed: true
+
+    - name: format-ruff
+      run: pixi {run} ruff-format
+      glob: "*.{py}"
+      stage_fixed: true
+
+    - name: format-toml
+      run: pixi {run} toml-format
+      glob: "*.{toml}"
+      stage_fixed: true
+
+    # Lint
+    - name: lint-frontend
+      run: pixi {run} frontend-lint
+      glob: "*.{js,ts,tsx,css,json}"
+      stage_fixed: true
+
+    - name: lint-cargo-deny
+      glob: "src-tauri/Cargo.{lock,toml}"
+      run: pixi {run} cargo-deny
+      stage_fixed: true
+
+    - name: lint-license-check
+      run: pixi {run} license-check
+      glob: "pnpm-lock.yaml"
+      stage_fixed: true
+
+    - name: lint-ruff
+      run: pixi {run} ruff-lint
+      glob: "*.{py}"
+      stage_fixed: true
+
+    - name: lint-toml
+      run: pixi {run} toml-lint
+      glob: "*.{toml}"
+      stage_fixed: true
+
+    - name: lint-github-actions
+      run: pixi {run} actionlint
+      glob: ".github/*"
+      stage_fixed: true
+
+    - name: lint-python-typecheck
+      run: pixi {run} python-typecheck
+      glob: "*.{py}"
+      stage_fixed: true
+
+    - name: lint-typos
+      run: pixi {run} typos
+      stage_fixed: true
+
+pre-push:
+  jobs:
+    - name: lint-backend
+      run: pixi {run} backend-lint
+      glob: "src-tauri/**/*"

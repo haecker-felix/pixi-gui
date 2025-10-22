@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["on tuesday"],
+  "enabledManagers": ["github-actions", "pixi", "cargo", "npm"],
+  "commitMessagePrefix": "chore(ci):",
+  "packageRules": [
+    {
+      "groupName": "GitHub Actions",
+      "matchManagers": ["github-actions"]
+    },
+    {
+      "groupName": "Pixi",
+      "matchManagers": ["pixi"]
+    },
+    {
+      "groupName": "Cargo",
+      "matchManagers": ["cargo"]
+    },
+    {
+      "groupName": "Npm",
+      "matchManagers": ["npm"]
+    }
+  ]
+}
