@@ -1,6 +1,13 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+// Increase stack size on Windows to prevent stack overflow (8MB like Linux)
+#[cfg(target_os = "windows")]
+#[unsafe(link_section = ".drectve")]
+#[used]
+static STACK_SIZE: [u8; 23] = *b" /STACK:8388608,8388608";
+
+
 use std::{env, path::PathBuf};
 
 use clap::Parser;
@@ -51,18 +58,5 @@ fn main() {
         return;
     }
 
-    // See https://github.com/prefix-dev/pixi/blob/7a53925d6fa0bdc1019d17648f6e6aaa3ee02c9b/crates/pixi/src/main.rs#L7
-    let main_stack_size = std::env::var("RUST_MIN_STACK")
-        .ok()
-        .and_then(|var| var.parse::<usize>().ok())
-        .unwrap_or(0)
-        .max(4 * 1024 * 1024);
-
-    std::thread::Builder::new()
-        .name("main2".to_string())
-        .stack_size(main_stack_size)
-        .spawn(move || pixi_gui_lib::run(workspace))
-        .expect("Failed to spawn main thread")
-        .join()
-        .expect("Main thread panicked");
+    pixi_gui_lib::run(workspace)
 }
