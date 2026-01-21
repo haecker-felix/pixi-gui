@@ -34,9 +34,9 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
   const navigate = getRouteApi("/workspace/$path").useNavigate();
 
   const [commandInput, setCommandInput] = useState("");
-  const [runningCommands, setRunningCommands] = useState<Map<string, string>>(
-    new Map(),
-  );
+  const [runningCommands, setRunningCommands] = useState<
+    Map<string, { command: string; editor?: Editor }>
+  >(new Map());
 
   // Editor
   const [lastEditor, setLastEditor] = useState<Editor | null>(null);
@@ -77,13 +77,17 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
   useEffect(() => {
     const loadRunningCommands = async () => {
       const ptys = await listPtys();
-      const commands = new Map<string, string>();
+      const commands = new Map<string, { command: string; editor?: Editor }>();
       for (const pty of ptys) {
         if (
           pty.invocation.kind.kind === "command" &&
           pty.invocation.kind.environment === name
         ) {
-          commands.set(pty.id, pty.invocation.kind.command);
+          const cmd = pty.invocation.kind.command;
+          commands.set(pty.id, {
+            command: cmd,
+            editor: availableEditors.find((e) => e.command === cmd),
+          });
         }
       }
       setRunningCommands(commands);
@@ -94,7 +98,12 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
     const unsubscribeStart = subscribe<PtyStartEvent>("pty-start", (event) => {
       const { kind } = event.invocation;
       if (kind.kind === "command" && kind.environment === name) {
-        setRunningCommands((prev) => new Map(prev).set(event.id, kind.command));
+        setRunningCommands((prev) =>
+          new Map(prev).set(event.id, {
+            command: kind.command,
+            editor: availableEditors.find((e) => e.command === kind.command),
+          }),
+        );
       }
     });
 
@@ -112,15 +121,18 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
       unsubscribeStart();
       unsubscribeExit();
     };
-  }, [name]);
+  }, [name, availableEditors]);
 
   const runFreeformTask = () => {
     if (!commandInput.trim()) return;
+    const command = commandInput.trim();
+    const editor = availableEditors.find((e) => e.command === command);
     navigate({
       to: "./process",
       search: {
         kind: "command",
-        command: commandInput.trim(),
+        command,
+        editor,
         environment: name,
         autoStart: true,
       },
@@ -136,6 +148,7 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
         search: {
           kind: "command",
           command: editor.command,
+          editor,
           environment: name,
           autoStart: true,
         },
@@ -206,10 +219,15 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
 
   // Filter and sort running commands
   const filteredCommands = [...runningCommands.entries()]
-    .filter(([, command]) =>
-      command.trim().toLowerCase().includes(normalizedFilter),
-    )
-    .sort(([, a], [, b]) => a.localeCompare(b));
+    .filter(([, { command, editor }]) => {
+      const searchText = editor?.name ?? command;
+      return searchText.trim().toLowerCase().includes(normalizedFilter);
+    })
+    .sort(([, a], [, b]) => {
+      const nameA = a.editor?.name ?? a.command;
+      const nameB = b.editor?.name ?? b.command;
+      return nameA.localeCompare(nameB);
+    });
 
   // Show environment if there's content or no filter is applied
   const hasContent =
@@ -271,11 +289,12 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
           </Button>
         }
       />
-      {filteredCommands.map(([id, command]) => (
+      {filteredCommands.map(([id, { command, editor }]) => (
         <ProcessRow
           key={id}
           kind="command"
           command={command}
+          editor={editor}
           environment={name}
         />
       ))}
