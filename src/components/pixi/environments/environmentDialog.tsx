@@ -131,7 +131,7 @@ export function EnvironmentDialog({
         <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>
-              {isEditMode ? "Edit Environment" : "Add New Environment"}
+              {isEditMode ? "Edit Environment" : "Add Environment"}
             </DialogTitle>
             <DialogDescription>
               {isEditMode
@@ -233,7 +233,7 @@ export function EnvironmentDialog({
                 (noDefaultFeature && selectedFeatures.length === 0)
               }
             >
-              {isEditMode ? "Save Changes" : "Add Environment"}
+              {isEditMode ? "Edit Environment" : "Add Environment"}
             </Button>
           </DialogFooter>
         </form>

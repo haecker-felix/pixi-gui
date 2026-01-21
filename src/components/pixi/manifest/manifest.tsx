@@ -96,7 +96,7 @@ export function Manifest() {
           property
         />
         <Row
-          title="Supported Platforms"
+          title="Platforms"
           subtitle={[...(platforms.default ?? [])]
             .sort()
             .map(getPlatformName)

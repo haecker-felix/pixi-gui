@@ -409,7 +409,7 @@ export function CondaDependencyDialog({
                 disabled={!isEditMode && selectedPackages.length === 0}
               >
                 {isEditMode
-                  ? "Save Changes"
+                  ? "Edit Dependency"
                   : selectedPackages.length === 0
                     ? "Add Dependencies"
                     : `Add ${selectedPackages.length} ${selectedPackages.length === 1 ? "Dependency" : "Dependencies"}`}
