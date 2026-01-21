@@ -28,14 +28,6 @@ export async function listInstallableEditors(
   });
 }
 
-export async function openInEditor(
-  workspace: string,
-  editor: string,
-  environment: string,
-): Promise<void> {
-  await invoke("open_in_editor", { workspace, editor: editor, environment });
-}
-
 const store = new LazyStore("editor-preferences.json");
 
 function getKey(workspaceRoot: string, environment: string): string {

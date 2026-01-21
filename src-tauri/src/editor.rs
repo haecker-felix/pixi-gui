@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process::Command, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 
 use pixi_api::{
     manifest::{EnvironmentName, HasFeaturesIter},
@@ -23,49 +23,49 @@ pub struct Editor {
 /// Editors detected via system PATH
 const KNOWN_SYSTEM_EDITORS: &[Editor] = &[
     Editor {
-        command: "code",
+        command: "code .",
         name: "Visual Studio Code",
         description: "Code editing. Redefined.",
         package_name: None,
     },
     Editor {
-        command: "cursor",
+        command: "cursor .",
         name: "Cursor",
         description: "The AI Code Editor",
         package_name: None,
     },
     Editor {
-        command: "zed",
+        command: "zed .",
         name: "Zed",
         description: "Code at the speed of thought",
         package_name: None,
     },
     Editor {
-        command: "subl",
+        command: "subl .",
         name: "Sublime Text",
         description: "Text Editing, Done Right",
         package_name: None,
     },
     Editor {
-        command: "charm",
+        command: "charm .",
         name: "PyCharm",
         description: "The Python IDE for Professional Developers",
         package_name: None,
     },
     Editor {
-        command: "idea",
+        command: "idea .",
         name: "IntelliJ IDEA",
         description: "The IDE for Professional Java Development",
         package_name: None,
     },
     Editor {
-        command: "webstorm",
+        command: "webstorm .",
         name: "WebStorm",
         description: "The JavaScript and TypeScript IDE",
         package_name: None,
     },
     Editor {
-        command: "rustrover",
+        command: "rustrover .",
         name: "RustRover",
         description: "The Rust IDE by JetBrains",
         package_name: None,
@@ -108,7 +108,11 @@ pub async fn list_available_editors<R: Runtime>(
     // Get system editors from PATH
     let mut editors: Vec<Editor> = KNOWN_SYSTEM_EDITORS
         .iter()
-        .filter(|editor| which(editor.command).is_ok())
+        .filter(|editor| {
+            // Extract the executable name (first word) from the command
+            let executable = editor.command.split_whitespace().next().unwrap_or("");
+            which(executable).is_ok()
+        })
         .copied()
         .collect();
 
@@ -159,23 +163,4 @@ pub async fn list_installable_editors<R: Runtime>(
         .collect();
 
     Ok(installable)
-}
-
-#[tauri::command]
-pub fn open_in_editor(
-    workspace: PathBuf,
-    editor: String,
-    environment: String,
-) -> Result<(), String> {
-    Command::new("pixi")
-        .arg("run")
-        .arg("--environment")
-        .arg(&environment)
-        .arg(&editor)
-        .arg(".")
-        .current_dir(&workspace)
-        .spawn()
-        .map_err(|e| format!("Failed to open editor: {}", e))?;
-
-    Ok(())
 }

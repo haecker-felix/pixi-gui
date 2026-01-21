@@ -1,5 +1,5 @@
 import { getRouteApi } from "@tanstack/react-router";
-import { EllipsisVerticalIcon, LoaderCircleIcon, PlayIcon } from "lucide-react";
+import { EllipsisVerticalIcon, PlayIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -22,6 +22,7 @@ import { addCondaDeps } from "@/lib/pixi/workspace/add";
 import { LockFileUsage } from "@/lib/pixi/workspace/reinstall";
 import type { Task } from "@/lib/pixi/workspace/task";
 import { type PtyExitEvent, type PtyStartEvent, listPtys } from "@/lib/pty";
+import { startCommand } from "@/hooks/useProcess";
 
 interface EnvironmentProps {
   name: string;
@@ -40,7 +41,6 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
 
   // Editor
   const [lastEditor, setLastEditor] = useState<Editor | null>(null);
-  const [isLaunching, setIsLaunching] = useState(false);
   const [editorDialogOpen, setEditorDialogOpen] = useState(false);
   const [availableEditors, setAvailableEditors] = useState<Editor[]>([]);
   const [installableEditors, setInstallableEditors] = useState<Editor[]>([]);
@@ -141,30 +141,7 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
   };
 
   const launchEditor = async (editor: Editor) => {
-    // If editor has a packageName, it's a package in the environment
-    if (editor.packageName) {
-      navigate({
-        to: "./process",
-        search: {
-          kind: "command",
-          command: editor.command,
-          editor,
-          environment: name,
-          autoStart: true,
-        },
-      });
-    } else {
-      // System editor, use pixi run directly
-      try {
-        setIsLaunching(true);
-        const { openInEditor } = await import("@/lib/editor");
-        await openInEditor(workspace.root, editor.command, name);
-        setTimeout(() => setIsLaunching(false), 3000);
-      } catch (error) {
-        setIsLaunching(false);
-        toast.error(`Failed to open ${editor.name}: ${error}`);
-      }
-    }
+    await startCommand(workspace, name, editor.command);
   };
 
   const handleInstallEditor = async (packageName: string, feature: string) => {
@@ -251,14 +228,7 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
       }
       headerSuffix={
         <div className="flex flex-wrap gap-pfx-xs">
-          <Badge
-            variant="default"
-            disabled={isLaunching}
-            onClick={handleEditorButtonClick}
-          >
-            {isLaunching && (
-              <LoaderCircleIcon className="size-3 animate-spin" />
-            )}
+          <Badge variant="default" onClick={handleEditorButtonClick}>
             {lastEditor ? `Open in ${lastEditor.name}` : "Open in Editor…"}
           </Badge>
           {lastEditor && (
