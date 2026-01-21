@@ -38,7 +38,7 @@ function WorkspaceComponent() {
     <div className="mx-auto max-w-5xl p-pfx-l pt-pfx-ml">
       <Header
         title={workspace.name}
-        subtitle={workspace.root}
+        subtitle={workspace.description ?? undefined}
         suffix={<AppMenu showChangeWorkspace />}
       />
 
