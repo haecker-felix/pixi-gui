@@ -29,6 +29,7 @@ export function Terminal({ id }: TerminalProps) {
 
   const { isRunning } = usePty({ id });
   const isRunningRef = useRef(isRunning);
+
   useEffect(() => {
     isRunningRef.current = isRunning;
   }, [isRunning]);
@@ -125,7 +126,11 @@ export function Terminal({ id }: TerminalProps) {
       style={{ width: "100%", height: "100%" }}
       className="rounded-pfx-s border border-pfxd-card-border bg-black p-pfx-s"
     >
-      <div style={{ width: "100%", height: "100%" }} ref={ref} />
+      <div
+        style={{ width: "100%", height: "100%" }}
+        className={isRunning ? "" : "[&_.xterm-cursor]:hidden!"}
+        ref={ref}
+      />
     </div>
   );
 }
