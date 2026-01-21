@@ -84,8 +84,8 @@ export function EditorDialog({
   return (
     <>
       <Dialog open onOpenChange={isInstalling ? undefined : onOpenChange}>
-        <DialogContent className="max-w-md">
-          <form onSubmit={handleSubmit}>
+        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+          <form onSubmit={handleSubmit} className="flex flex-col min-h-0">
             <DialogHeader>
               <DialogTitle>Open in Editor</DialogTitle>
               <DialogDescription>
@@ -94,54 +94,56 @@ export function EditorDialog({
               </DialogDescription>
             </DialogHeader>
 
-            {/* Available Editors Section (system editors + installed editors) */}
-            <PreferencesGroup
-              title="Available"
-              nested
-              placeholder="No editors found"
-            >
-              {availableEditors.map((editor) => (
-                <SelectableRow
-                  key={editor.packageName ?? editor.command}
-                  prefix={<CircularIcon icon="editor" />}
-                  title={editor.name}
-                  selected={selection?.command === editor.command}
-                  onClick={() => setSelection(editor)}
-                  variant="single"
-                />
-              ))}
-            </PreferencesGroup>
-
-            {/* Installable Section (not yet installed) */}
-            {installableEditors.length > 0 && (
-              <PreferencesGroup title="Installable" nested>
-                {installableEditors.map((editor) => (
-                  <Row
-                    key={editor.packageName}
-                    prefix={<CircularIcon icon="package" />}
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {/* Available Editors Section (system editors + installed editors) */}
+              <PreferencesGroup
+                title="Available"
+                nested
+                placeholder="No editors found"
+              >
+                {availableEditors.map((editor) => (
+                  <SelectableRow
+                    key={editor.packageName ?? editor.command}
+                    prefix={<CircularIcon icon="editor" />}
                     title={editor.name}
-                    suffix={
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handleInstallClick(editor.packageName ?? "")
-                        }
-                        disabled={isInstalling}
-                      >
-                        {isInstalling &&
-                        installingPackage === editor.packageName ? (
-                          <LoaderCircleIcon className="animate-spin" />
-                        ) : (
-                          "Add to Environment"
-                        )}
-                      </Button>
-                    }
+                    selected={selection?.command === editor.command}
+                    onClick={() => setSelection(editor)}
+                    variant="single"
                   />
                 ))}
               </PreferencesGroup>
-            )}
+
+              {/* Installable Section (not yet installed) */}
+              {installableEditors.length > 0 && (
+                <PreferencesGroup title="Installable" nested>
+                  {installableEditors.map((editor) => (
+                    <Row
+                      key={editor.packageName}
+                      prefix={<CircularIcon icon="package" />}
+                      title={editor.name}
+                      suffix={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleInstallClick(editor.packageName ?? "")
+                          }
+                          disabled={isInstalling}
+                        >
+                          {isInstalling &&
+                          installingPackage === editor.packageName ? (
+                            <LoaderCircleIcon className="animate-spin" />
+                          ) : (
+                            "Add to Environment"
+                          )}
+                        </Button>
+                      }
+                    />
+                  ))}
+                </PreferencesGroup>
+              )}
+            </div>
 
             <DialogFooter>
               <Button
