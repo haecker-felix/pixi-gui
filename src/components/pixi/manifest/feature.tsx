@@ -73,30 +73,6 @@ export function Feature({ feature, workspace, onRemove }: FeatureProps) {
           )
         }
       >
-        <PreferencesGroup title="Tasks" nested>
-          <div className="flex flex-wrap gap-pfx-xs">
-            {Object.keys(feature.tasks)
-              .sort()
-              .map((taskName) => (
-                <Badge
-                  key={taskName}
-                  title="Edit Task"
-                  onClick={() =>
-                    setIsEditingTask({
-                      name: taskName,
-                      task: feature.tasks[taskName],
-                    })
-                  }
-                >
-                  {taskName}
-                </Badge>
-              ))}
-            <Badge title="Add Task" onClick={() => setIsAddingTask(true)}>
-              +
-            </Badge>
-          </div>
-        </PreferencesGroup>
-
         <PreferencesGroup title="Conda Dependencies" nested>
           <div className="flex flex-wrap gap-pfx-xs">
             {Object.keys(feature.dependencies)
@@ -148,6 +124,30 @@ export function Feature({ feature, workspace, onRemove }: FeatureProps) {
               title="Add PyPI Dependency"
               onClick={() => setIsAddingPypiDependency(true)}
             >
+              +
+            </Badge>
+          </div>
+        </PreferencesGroup>
+
+        <PreferencesGroup title="Tasks" nested>
+          <div className="flex flex-wrap gap-pfx-xs">
+            {Object.keys(feature.tasks)
+              .sort()
+              .map((taskName) => (
+                <Badge
+                  key={taskName}
+                  title="Edit Task"
+                  onClick={() =>
+                    setIsEditingTask({
+                      name: taskName,
+                      task: feature.tasks[taskName],
+                    })
+                  }
+                >
+                  {taskName}
+                </Badge>
+              ))}
+            <Badge title="Add Task" onClick={() => setIsAddingTask(true)}>
               +
             </Badge>
           </div>
