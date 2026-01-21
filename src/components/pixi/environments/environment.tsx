@@ -13,10 +13,13 @@ import { Input } from "@/components/shadcn/input";
 import {
   type Editor,
   getEditorPreference,
-  openInEditor as open,
+  listAvailableEditors,
+  listInstallableEditors,
   setEditorPreference,
 } from "@/lib/editor";
 import { subscribe } from "@/lib/event";
+import { addCondaDeps } from "@/lib/pixi/workspace/add";
+import { LockFileUsage } from "@/lib/pixi/workspace/reinstall";
 import type { Task } from "@/lib/pixi/workspace/task";
 import { type PtyExitEvent, type PtyStartEvent, listPtys } from "@/lib/pty";
 
@@ -24,15 +27,9 @@ interface EnvironmentProps {
   name: string;
   tasks: Record<string, Task>;
   filter: string;
-  availableEditors: Record<string, string>;
 }
 
-export function Environment({
-  name,
-  tasks,
-  filter,
-  availableEditors,
-}: EnvironmentProps) {
+export function Environment({ name, tasks, filter }: EnvironmentProps) {
   const { workspace } = getRouteApi("/workspace/$path").useLoaderData();
   const navigate = getRouteApi("/workspace/$path").useNavigate();
 
@@ -45,10 +42,8 @@ export function Environment({
   const [lastEditor, setLastEditor] = useState<Editor | null>(null);
   const [isLaunching, setIsLaunching] = useState(false);
   const [editorDialogOpen, setEditorDialogOpen] = useState(false);
-
-  const sortedEditors = Object.entries(availableEditors).sort(([, a], [, b]) =>
-    a.localeCompare(b),
-  );
+  const [availableEditors, setAvailableEditors] = useState<Editor[]>([]);
+  const [installableEditors, setInstallableEditors] = useState<Editor[]>([]);
 
   // Load saved editor preference on mount
   useEffect(() => {
@@ -59,6 +54,23 @@ export function Environment({
       }
     };
     void loadPreference();
+  }, [workspace.root, name]);
+
+  // Load available and installable editors for this environment
+  useEffect(() => {
+    const loadEditors = async () => {
+      try {
+        const [available, installable] = await Promise.all([
+          listAvailableEditors(workspace.root, name),
+          listInstallableEditors(workspace.root, name),
+        ]);
+        setAvailableEditors(available);
+        setInstallableEditors(installable);
+      } catch (error) {
+        console.error("Failed to load editors:", error);
+      }
+    };
+    void loadEditors();
   }, [workspace.root, name]);
 
   // Load running commands on mount and subscribe to pty events to track the running freeform tasks / commands
@@ -116,14 +128,56 @@ export function Environment({
     setCommandInput("");
   };
 
-  const openInEditor = async (command: string, editorName: string) => {
+  const launchEditor = async (editor: Editor) => {
+    // If editor has a packageName, it's a package in the environment
+    if (editor.packageName) {
+      navigate({
+        to: "./process",
+        search: {
+          kind: "command",
+          command: editor.command,
+          environment: name,
+          autoStart: true,
+        },
+      });
+    } else {
+      // System editor, use pixi run directly
+      try {
+        setIsLaunching(true);
+        const { openInEditor } = await import("@/lib/editor");
+        await openInEditor(workspace.root, editor.command, name);
+        setTimeout(() => setIsLaunching(false), 3000);
+      } catch (error) {
+        setIsLaunching(false);
+        toast.error(`Failed to open ${editor.name}: ${error}`);
+      }
+    }
+  };
+
+  const handleInstallEditor = async (packageName: string, feature: string) => {
     try {
-      setIsLaunching(true);
-      await open(workspace.root, command, name);
-      setTimeout(() => setIsLaunching(false), 3000);
+      await addCondaDeps(
+        workspace.root,
+        { [packageName]: { name: packageName } },
+        {
+          feature,
+          platforms: [],
+          no_install: false,
+          lock_file_usage: LockFileUsage.Update,
+        },
+      );
+
+      // Refresh editors after successful installation
+      const [available, installable] = await Promise.all([
+        listAvailableEditors(workspace.root, name),
+        listInstallableEditors(workspace.root, name),
+      ]);
+      setAvailableEditors(available);
+      setInstallableEditors(installable);
+
+      toast.success(`Successfully installed ${packageName}`);
     } catch (error) {
-      setIsLaunching(false);
-      toast.error(`Failed to open ${editorName}: ${error}`);
+      toast.error(`Failed to install ${packageName}: ${error}`);
     }
   };
 
@@ -132,13 +186,13 @@ export function Environment({
       setEditorDialogOpen(true);
       return;
     }
-    openInEditor(lastEditor.command, lastEditor.name);
+    void launchEditor(lastEditor);
   };
 
   const handleEditorDialogSubmit = async (editor: Editor) => {
     setLastEditor(editor);
     await setEditorPreference(workspace.root, name, editor);
-    openInEditor(editor.command, editor.name);
+    void launchEditor(editor);
   };
 
   const normalizedFilter = filter.trim().toLowerCase();
@@ -239,8 +293,10 @@ export function Environment({
         <EditorDialog
           onOpenChange={setEditorDialogOpen}
           environment={name}
-          availableEditors={sortedEditors}
+          availableEditors={availableEditors}
+          installableEditors={installableEditors}
           onSubmit={handleEditorDialogSubmit}
+          onInstallEditor={handleInstallEditor}
         />
       )}
     </PreferencesGroup>
