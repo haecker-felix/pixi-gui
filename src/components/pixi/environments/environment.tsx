@@ -255,7 +255,7 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
       stickyHeader
     >
       <Input
-        label="Enter a task or command to run…"
+        placeholder="Enter a task or command to run…"
         value={commandInput}
         onChange={(e) => setCommandInput(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && runFreeformTask()}

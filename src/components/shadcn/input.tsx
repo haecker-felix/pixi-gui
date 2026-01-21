@@ -9,12 +9,22 @@ function Input({
   label,
   placeholder,
   required,
+  icon,
   suffix,
   ...props
-}: React.ComponentProps<"input"> & { label?: string; suffix?: ReactNode }) {
+}: React.ComponentProps<"input"> & {
+  label?: string;
+  icon?: ReactNode;
+  suffix?: ReactNode;
+}) {
   if (label) {
     return (
       <div className={cn("relative", className)}>
+        {icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-pfxgsl-400">
+            {icon}
+          </div>
+        )}
         <input
           type={type}
           data-slot="input"
@@ -30,6 +40,7 @@ function Input({
               : "placeholder:text-transparent",
             "focus:outline-none focus:ring-0",
             "border-pfxl-card-border bg-white hover:border-pfx-primary-alt focus:border-pfx-primary-alt dark:border-pfxd-card-border dark:bg-pfxgsd-700 dark:focus:border-pfx-primary-alt dark:hover:border-pfx-primary-alt",
+            icon && "pl-12",
             suffix && "pr-12",
           )}
           {...props}
@@ -37,7 +48,8 @@ function Input({
         <label
           data-slot="label"
           className={cn(
-            "absolute left-4 pointer-events-none text-sm font-medium text-pfxgsl-400 transition-all duration-100",
+            "absolute pointer-events-none text-sm font-medium text-pfxgsl-400 transition-all duration-100",
+            icon ? "left-12" : "left-4",
             placeholder
               ? "top-2 text-xs"
               : "peer-placeholder-shown:top-5 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs  peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs",
@@ -47,7 +59,7 @@ function Input({
           {required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
         {suffix && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-pfxgsl-400">
             {suffix}
           </div>
         )}
@@ -55,21 +67,34 @@ function Input({
     );
   }
   return (
-    <input
-      type={type}
-      data-slot="input"
-      placeholder={placeholder}
-      autoCapitalize="off"
-      autoCorrect="off"
-      spellCheck="false"
-      className={cn(
-        "h-16 w-full rounded-2xl border px-4 font-body text-pfxl-text transition duration-300 ease-out placeholder:text-pfxgsl-400 dark:text-pfxd-text dark:placeholder:text-pfxgsl-400",
-        "focus:outline-none focus:ring-0",
-        "border-pfxl-card-border bg-white hover:border-pfx-primary-alt focus:border-pfx-primary-alt dark:border-pfxd-card-border dark:bg-pfxgsd-700 dark:focus:border-pfx-primary-alt dark:hover:border-pfx-primary-alt",
-        className,
+    <div className={cn("relative", className)}>
+      {icon && (
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-pfxgsl-400">
+          {icon}
+        </div>
       )}
-      {...props}
-    />
+      <input
+        type={type}
+        data-slot="input"
+        placeholder={placeholder}
+        autoCapitalize="off"
+        autoCorrect="off"
+        spellCheck="false"
+        className={cn(
+          "h-16 w-full rounded-2xl border px-4 font-body text-pfxl-text transition duration-300 ease-out placeholder:text-pfxgsl-400 dark:text-pfxd-text dark:placeholder:text-pfxgsl-400",
+          "focus:outline-none focus:ring-0",
+          "border-pfxl-card-border bg-white hover:border-pfx-primary-alt focus:border-pfx-primary-alt dark:border-pfxd-card-border dark:bg-pfxgsd-700 dark:focus:border-pfx-primary-alt dark:hover:border-pfx-primary-alt",
+          icon && "pl-12",
+          suffix && "pr-12",
+        )}
+        {...props}
+      />
+      {suffix && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-pfxgsl-400">
+          {suffix}
+        </div>
+      )}
+    </div>
   );
 }
 

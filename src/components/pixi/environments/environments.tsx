@@ -1,4 +1,5 @@
 import { getRouteApi } from "@tanstack/react-router";
+import { SearchIcon } from "lucide-react";
 
 import { Environment } from "@/components/pixi/environments/environment";
 import { Input } from "@/components/shadcn/input";
@@ -26,6 +27,7 @@ export function Environments() {
           spellCheck={false}
           autoCorrect="off"
           autoFocus={true}
+          icon={<SearchIcon />}
         />
       </div>
       {Object.entries(tasks)
