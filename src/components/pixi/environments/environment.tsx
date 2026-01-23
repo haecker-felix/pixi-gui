@@ -10,6 +10,7 @@ import { Badge } from "@/components/shadcn/badge";
 import { Button } from "@/components/shadcn/button";
 import { Input } from "@/components/shadcn/input";
 
+import { startCommand } from "@/hooks/useProcess";
 import {
   type Editor,
   getEditorPreference,
@@ -22,7 +23,6 @@ import { addCondaDeps } from "@/lib/pixi/workspace/add";
 import { LockFileUsage } from "@/lib/pixi/workspace/reinstall";
 import type { Task } from "@/lib/pixi/workspace/task";
 import { type PtyExitEvent, type PtyStartEvent, listPtys } from "@/lib/pty";
-import { startCommand } from "@/hooks/useProcess";
 
 interface EnvironmentProps {
   name: string;
@@ -141,7 +141,21 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
   };
 
   const launchEditor = async (editor: Editor) => {
-    await startCommand(workspace, name, editor.command);
+    if (editor.packageName) {
+      navigate({
+        to: "./process",
+        search: {
+          kind: "command",
+          command: editor.command,
+          editor,
+          environment: name,
+          autoStart: true,
+        },
+      });
+    } else {
+      await startCommand(workspace, name, editor.command);
+      toast.info(`Opening ${editor.name}…`);
+    }
   };
 
   const handleInstallEditor = async (packageName: string, feature: string) => {
