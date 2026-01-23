@@ -3,6 +3,7 @@ import { SearchIcon } from "lucide-react";
 import { useMemo } from "react";
 
 import { Environment } from "@/components/pixi/environments/environment";
+import { Button } from "@/components/shadcn/button";
 import {
   Empty,
   EmptyDescription,
@@ -12,7 +13,7 @@ import {
 import { Input } from "@/components/shadcn/input";
 
 export function Environments() {
-  const { tasks } = getRouteApi("/workspace/$path").useLoaderData();
+  const { tasks, features } = getRouteApi("/workspace/$path").useLoaderData();
   const { search = "" } = getRouteApi("/workspace/$path/").useSearch();
   const navigate = getRouteApi("/workspace/$path").useNavigate();
 
@@ -33,6 +34,42 @@ export function Environments() {
       ),
     );
   }, [tasks, search]);
+
+  // Check if workspace is empty (no tasks and no dependencies)
+  const isWorkspaceEmpty = useMemo(() => {
+    const hasTasks = features.some(
+      (feature) => Object.keys(feature.tasks).length > 0,
+    );
+    const hasDependencies = features.some(
+      (feature) =>
+        Object.keys(feature.dependencies).length > 0 ||
+        Object.keys(feature.pypiDependencies).length > 0,
+    );
+    return !hasTasks && !hasDependencies;
+  }, [features]);
+
+  if (isWorkspaceEmpty) {
+    return (
+      <Empty>
+        <img src="/paxton_empty_state.png" className="size-32 object-contain" />
+        <EmptyHeader>
+          <EmptyTitle>Get Started With Pixi</EmptyTitle>
+          <EmptyDescription>
+            Your workspace is empty. Add your first dependencies and tasks by
+            editing the Pixi manifest!
+          </EmptyDescription>
+        </EmptyHeader>
+        <Button
+          size="sm"
+          onClick={() =>
+            navigate({ search: (prev) => ({ ...prev, tab: "manifest" }) })
+          }
+        >
+          Edit Manifest
+        </Button>
+      </Empty>
+    );
+  }
 
   return (
     <>

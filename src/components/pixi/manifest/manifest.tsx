@@ -124,11 +124,7 @@ export function Manifest() {
                 testing, development, CI, or platform-specific requirements.
               </EmptyDescription>
             </EmptyHeader>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsAddingEnvironment(true)}
-            >
+            <Button size="sm" onClick={() => setIsAddingEnvironment(true)}>
               Add New Environment
             </Button>
           </Empty>
@@ -144,7 +140,7 @@ export function Manifest() {
             stickyHeader
             headerSuffix={
               <Button
-                size="icon"
+                size="sm"
                 variant="ghost"
                 onClick={() => setIsAddingEnvironment(true)}
                 title="Add Environment"
