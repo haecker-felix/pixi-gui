@@ -1,7 +1,14 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { SearchIcon } from "lucide-react";
+import { useMemo } from "react";
 
 import { Environment } from "@/components/pixi/environments/environment";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/shadcn/empty";
 import { Input } from "@/components/shadcn/input";
 
 export function Environments() {
@@ -16,18 +23,29 @@ export function Environments() {
     });
   };
 
+  const hasAnyResults = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) return true;
+
+    return Object.entries(tasks).some(([, envTasks]) =>
+      Object.keys(envTasks).some((taskName) =>
+        taskName.trim().toLowerCase().includes(normalizedSearch),
+      ),
+    );
+  }, [tasks, search]);
+
   return (
     <>
       <div className="mt-pfx-m">
         <Input
           value={search}
           onChange={(event) => updateSearch(event.target.value)}
-          placeholder="Search in environments…"
+          placeholder="Search…"
           autoComplete="off"
           spellCheck={false}
           autoCorrect="off"
           autoFocus={true}
-          icon={<SearchIcon />}
+          icon={<SearchIcon className="size-4" />}
         />
       </div>
       {Object.entries(tasks)
@@ -47,6 +65,16 @@ export function Environments() {
             />
           );
         })}
+      {!hasAnyResults && (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>No results found</EmptyTitle>
+            <EmptyDescription>
+              No tasks match &quot;{search}&quot;
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
     </>
   );
 }

@@ -3,6 +3,12 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+const baseInputClass =
+  "w-full border rounded-2xl font-body text-pfxl-text transition duration-300 ease-out placeholder:text-pfxgsl-400 dark:text-pfxd-text dark:placeholder:text-pfxgsl-400 focus:outline-none focus:ring-0 border-pfxl-card-border bg-white hover:border-pfx-primary-alt focus:border-pfx-primary-alt dark:border-pfxd-card-border dark:bg-pfxgsd-700 dark:focus:border-pfx-primary-alt dark:hover:border-pfx-primary-alt";
+const iconClass =
+  "absolute left-4 top-1/2 -translate-y-1/2 text-pfxgsl-400 [&>svg]:size-4";
+const suffixClass = "absolute right-4 top-1/2 -translate-y-1/2 text-pfxgsl-400";
+
 function Input({
   className,
   type,
@@ -20,11 +26,7 @@ function Input({
   if (label) {
     return (
       <div className={cn("relative", className)}>
-        {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-pfxgsl-400">
-            {icon}
-          </div>
-        )}
+        {icon && <div className={iconClass}>{icon}</div>}
         <input
           type={type}
           data-slot="input"
@@ -34,14 +36,13 @@ function Input({
           autoCorrect="off"
           spellCheck="false"
           className={cn(
-            "peer h-16 w-full rounded-2xl border px-3.5 pt-4 font-body text-pfxl-text transition duration-300 ease-out  dark:text-pfxd-text",
+            baseInputClass,
+            "h-16 peer pt-4 px-3.5",
+            icon && "pl-12",
+            suffix && "pr-12",
             placeholder
               ? "placeholder:text-pfxgsl-400 dark:placeholder:text-pfxgsl-400"
               : "placeholder:text-transparent",
-            "focus:outline-none focus:ring-0",
-            "border-pfxl-card-border bg-white hover:border-pfx-primary-alt focus:border-pfx-primary-alt dark:border-pfxd-card-border dark:bg-pfxgsd-700 dark:focus:border-pfx-primary-alt dark:hover:border-pfx-primary-alt",
-            icon && "pl-12",
-            suffix && "pr-12",
           )}
           {...props}
         />
@@ -58,21 +59,13 @@ function Input({
           {label}
           {required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
-        {suffix && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-pfxgsl-400">
-            {suffix}
-          </div>
-        )}
+        {suffix && <div className={suffixClass}>{suffix}</div>}
       </div>
     );
   }
   return (
     <div className={cn("relative", className)}>
-      {icon && (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-pfxgsl-400">
-          {icon}
-        </div>
-      )}
+      {icon && <div className={iconClass}>{icon}</div>}
       <input
         type={type}
         data-slot="input"
@@ -81,19 +74,14 @@ function Input({
         autoCorrect="off"
         spellCheck="false"
         className={cn(
-          "h-16 w-full rounded-2xl border px-4 font-body text-pfxl-text transition duration-300 ease-out placeholder:text-pfxgsl-400 dark:text-pfxd-text dark:placeholder:text-pfxgsl-400",
-          "focus:outline-none focus:ring-0",
-          "border-pfxl-card-border bg-white hover:border-pfx-primary-alt focus:border-pfx-primary-alt dark:border-pfxd-card-border dark:bg-pfxgsd-700 dark:focus:border-pfx-primary-alt dark:hover:border-pfx-primary-alt",
-          icon && "pl-12",
-          suffix && "pr-12",
+          baseInputClass,
+          "h-12 px-3.5",
+          icon && "pl-10",
+          suffix && "pr-10",
         )}
         {...props}
       />
-      {suffix && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-pfxgsl-400">
-          {suffix}
-        </div>
-      )}
+      {suffix && <div className={suffixClass}>{suffix}</div>}
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { getRouteApi } from "@tanstack/react-router";
-import { EllipsisVerticalIcon, PlayIcon } from "lucide-react";
+import { Link, getRouteApi } from "@tanstack/react-router";
+import { EllipsisVerticalIcon, PlayIcon, TerminalIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -7,7 +7,12 @@ import { PreferencesGroup } from "@/components/common/preferencesGroup";
 import { EditorDialog } from "@/components/pixi/process/editorDialog";
 import { ProcessRow } from "@/components/pixi/process/processRow";
 import { Badge } from "@/components/shadcn/badge";
-import { Button } from "@/components/shadcn/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/shadcn/empty";
 import { Input } from "@/components/shadcn/input";
 
 import { startCommand } from "@/hooks/useProcess";
@@ -260,19 +265,7 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
         value={commandInput}
         onChange={(e) => setCommandInput(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && runFreeformTask()}
-        suffix={
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            title="Run command"
-            disabled={!commandInput.trim()}
-            onClick={runFreeformTask}
-            className="mr-0.5"
-          >
-            <PlayIcon className="text-pfx-good" />
-          </Button>
-        }
+        icon={<TerminalIcon className="size-4" />}
       />
       {filteredCommands.map(([id, { command, editor }]) => (
         <ProcessRow
@@ -292,6 +285,21 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
           environment={name}
         />
       ))}
+      {Object.keys(tasks).length === 0 && (
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyTitle>No tasks available</EmptyTitle>
+            <EmptyDescription>
+              This environment has no tasks. You can add tasks or dependencies
+              to this environment by{" "}
+              <Link to="." search={{ tab: "manifest" }}>
+                editing the Pixi manifest
+              </Link>
+              .
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
 
       {editorDialogOpen && (
         <EditorDialog
