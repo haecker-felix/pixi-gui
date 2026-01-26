@@ -42,7 +42,6 @@ export function SortableRow({
         <>
           <div
             className="-ms-pfx-xs me-pfx-xs cursor-grab rounded-full p-1 outline-none active:cursor-grabbing focus-visible:bg-pfxgsl-200 dark:focus-visible:bg-pfxgsd-600"
-            tabIndex={0}
             {...attributes}
             {...listeners}
           >
