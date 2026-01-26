@@ -39,7 +39,7 @@ function WorkspaceComponent() {
       <Header
         title={workspace.name}
         subtitle={workspace.description ?? undefined}
-        suffix={<AppMenu showChangeWorkspace />}
+        suffix={<AppMenu showChangeWorkspace manifestPath={workspace.manifest} />}
       />
 
       <Tabs value={tab} onValueChange={updateTab}>
