@@ -1,8 +1,16 @@
 import { getName } from "@tauri-apps/api/app";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Row } from "@/components/common/row";
-import { Dialog, DialogContent } from "@/components/shadcn/dialog";
+import { Button } from "@/components/shadcn/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/shadcn/dialog";
 
 import { getAppVersion, getPixiVersion } from "@/lib/pixi/version";
 
@@ -36,6 +44,10 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton className="max-h-[95vh] overflow-y-auto">
+        <DialogTitle className="sr-only">About Pixi GUI</DialogTitle>
+        <DialogDescription className="sr-only">
+          App version details
+        </DialogDescription>
         <div className="flex flex-col items-center">
           <img src="/paxton.png" alt="Paxton" className="h-32 mt-pfx-m" />
 
@@ -49,6 +61,16 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
             <Row title={`${appName} Version`} subtitle={appVersion} property />
             <Row title="Pixi API Version" subtitle={pixiVersion} property />
           </div>
+
+          <Button
+            variant="ghost"
+            className="mt-pfx-m"
+            onClick={() =>
+              openUrl("https://github.com/prefix-dev/pixi-gui/issues")
+            }
+          >
+            Report Issue <ExternalLinkIcon />
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

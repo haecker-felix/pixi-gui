@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { EllipsisVerticalIcon } from "lucide-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import {
+  AppWindowIcon,
+  BookOpenTextIcon,
+  BoxesIcon,
+  EllipsisVerticalIcon,
+  InfoIcon,
+} from "lucide-react";
 import { useState } from "react";
 
 import { AboutDialog } from "@/components/common/aboutDialog";
@@ -8,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/shadcn/dropdown-menu";
 
@@ -28,6 +36,14 @@ export function AppMenu({ showChangeWorkspace = false }: AppMenuProps) {
     }
   };
 
+  const handleDocumentation = async () => {
+    try {
+      await openUrl("https://pixi.prefix.dev/");
+    } catch (error) {
+      console.error("Failed to open help URL:", error);
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -38,14 +54,20 @@ export function AppMenu({ showChangeWorkspace = false }: AppMenuProps) {
       <DropdownMenuContent align="end">
         {showChangeWorkspace && (
           <DropdownMenuItem asChild>
-            <Link to={"/"}>Change Workspace</Link>
+            <Link to={"/"}>
+              <BoxesIcon /> Change Workspace
+            </Link>
           </DropdownMenuItem>
         )}
+        {showChangeWorkspace && <DropdownMenuSeparator />}
         <DropdownMenuItem onClick={handleNewWindow}>
-          New Window
+          <AppWindowIcon /> New Window
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleDocumentation}>
+          <BookOpenTextIcon /> Documentation
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setIsAboutDialogOpen(true)}>
-          About Pixi GUI
+          <InfoIcon /> About Pixi GUI
         </DropdownMenuItem>
       </DropdownMenuContent>
 
