@@ -1,6 +1,6 @@
 import { getName } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { BugIcon, ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Row } from "@/components/common/row";
