@@ -12,7 +12,7 @@ import {
   requestPermission,
   sendNotification,
 } from "@tauri-apps/plugin-notification";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 
 import { subscribe } from "@/lib/event";
@@ -167,7 +167,7 @@ function WorkspaceLayout() {
   }, []);
 
   // Before closing a workspace, ensure that it has no active PTYs anymore
-  const closeWorkspace = async (): Promise<boolean> => {
+  const closeWorkspace = useCallback(async (): Promise<boolean> => {
     const handles = await listPtys();
     const workspaceHandles = handles.filter(
       (handle) => handle.invocation.cwd === workspace.root,
@@ -195,7 +195,7 @@ function WorkspaceLayout() {
     );
 
     return true;
-  };
+  }, [workspace.root]);
 
   // Window gets closed
   useEffect(() => {
@@ -214,7 +214,7 @@ function WorkspaceLayout() {
           console.error("Could not unlisten workspace listener: ", reason),
         );
     };
-  }, []);
+  }, [closeWorkspace]);
 
   // User navigates away from /workspace
   useBlocker({
