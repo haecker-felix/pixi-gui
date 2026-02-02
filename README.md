@@ -57,7 +57,7 @@ Runs all linters and formatters for both backend (`clippy`, `rustfmt`) and front
 pixi run build-package
 ```
 
-Builds a conda package using rattler-build. The resulting package can be uploaded to a conda channel for distribution.
+Builds a installable conda package using rattler-build.
 
 ## Contributing
 
