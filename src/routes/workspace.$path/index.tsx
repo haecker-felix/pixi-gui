@@ -1,5 +1,6 @@
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { Bug, CirclePlay, ScrollTextIcon } from "lucide-react";
+import { useEffect } from "react";
 
 import { AppMenu } from "@/components/common/appMenu";
 import { Header } from "@/components/common/header";
@@ -12,6 +13,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn/tabs";
+
+import { subscribe } from "@/lib/event";
 
 export const Route = createFileRoute("/workspace/$path/")({
   component: WorkspaceComponent,
@@ -33,6 +36,24 @@ function WorkspaceComponent() {
       replace: true,
     });
   };
+
+  useEffect(() => {
+    return subscribe("menu-find", () => {
+      navigate({
+        search: (prev) => ({ ...prev, tab: "run" }),
+        replace: true,
+      });
+
+      // Focus the search input (use setTimeout to ensure tab switch is complete)
+      setTimeout(() => {
+        const searchInput = document.getElementById("task-search");
+        if (searchInput) {
+          searchInput.focus();
+          (searchInput as HTMLInputElement).select();
+        }
+      }, 0);
+    });
+  }, [navigate]);
 
   return (
     <div className="mx-auto max-w-5xl p-pfx-l pt-pfx-ml">

@@ -7,7 +7,7 @@ import {
   EllipsisVerticalIcon,
   InfoIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AboutDialog } from "@/components/common/aboutDialog";
 import { Button } from "@/components/shadcn/button";
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shadcn/dropdown-menu";
 
+import { subscribe } from "@/lib/event";
 import { openNewWindow } from "@/lib/window";
 
 interface AppMenuProps {
@@ -43,6 +44,16 @@ export function AppMenu({ showChangeWorkspace = false }: AppMenuProps) {
       console.error("Failed to open help URL:", error);
     }
   };
+
+  // Listen for menu events
+  useEffect(() => {
+    const unsubAbout = subscribe("menu-about", () =>
+      setIsAboutDialogOpen(true),
+    );
+    return () => {
+      unsubAbout();
+    };
+  }, []);
 
   return (
     <DropdownMenu>

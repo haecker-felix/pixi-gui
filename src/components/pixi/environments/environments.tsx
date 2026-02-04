@@ -75,6 +75,7 @@ export function Environments() {
     <>
       <div className="mt-pfx-m">
         <Input
+          id="task-search"
           value={search}
           onChange={(event) => updateSearch(event.target.value)}
           placeholder="Search…"

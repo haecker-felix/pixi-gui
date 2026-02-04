@@ -17,6 +17,10 @@ use std::path::PathBuf;
 
 use crate::state::AppState;
 use clap::Parser;
+use tauri::{
+    Emitter,
+    menu::{Menu, MenuItemBuilder, PredefinedMenuItem, Submenu},
+};
 
 #[derive(Parser)]
 #[command(version = option_env!("PIXI_GUI_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))]
@@ -132,6 +136,83 @@ pub fn run(workspace_path: Option<String>) {
             editor::list_installable_editors,
         ])
         .setup(move |app| {
+            // Build menu with standard items plus custom "Find Task"
+            let about_item = MenuItemBuilder::with_id("about", "About Pixi GUI").build(app)?;
+
+            let app_menu = Submenu::with_items(
+                app,
+                "Pixi GUI",
+                true,
+                &[
+                    &about_item,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::services(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::hide(app, None)?,
+                    &PredefinedMenuItem::hide_others(app, None)?,
+                    &PredefinedMenuItem::show_all(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::quit(app, None)?,
+                ],
+            )?;
+
+            let find_item = MenuItemBuilder::with_id("find", "Find Task")
+                .accelerator("CmdOrCtrl+F")
+                .build(app)?;
+
+            let edit_menu = Submenu::with_items(
+                app,
+                "Edit",
+                true,
+                &[
+                    &PredefinedMenuItem::undo(app, None)?,
+                    &PredefinedMenuItem::redo(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::cut(app, None)?,
+                    &PredefinedMenuItem::copy(app, None)?,
+                    &PredefinedMenuItem::paste(app, None)?,
+                    &PredefinedMenuItem::select_all(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &find_item,
+                ],
+            )?;
+
+            let view_menu = Submenu::with_items(
+                app,
+                "View",
+                true,
+                &[&PredefinedMenuItem::fullscreen(app, None)?],
+            )?;
+
+            let window_menu = Submenu::with_items(
+                app,
+                "Window",
+                true,
+                &[
+                    &PredefinedMenuItem::minimize(app, None)?,
+                    &PredefinedMenuItem::maximize(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::close_window(app, None)?,
+                ],
+            )?;
+
+            let menu = Menu::with_items(app, &[&app_menu, &edit_menu, &view_menu, &window_menu])?;
+            app.set_menu(menu)?;
+
+            // Handle menu events
+            app.on_menu_event(|app, event| match event.id().0.as_str() {
+                "find" => {
+                    let _ = app.emit("menu-find", ());
+                }
+                "about" => {
+                    let _ = app.emit("menu-about", ());
+                }
+                "documentation" => {
+                    let _ = app.emit("menu-documentation", ());
+                }
+                _ => {}
+            });
+
             // On Linux and Windows, file associations launch a new process with the file path in CLI args
             if let Some(workspace) = &workspace_path {
                 window::ensure_workspace_window(app.handle(), &std::path::PathBuf::from(workspace));
