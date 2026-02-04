@@ -1,6 +1,6 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { SearchIcon } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Environment } from "@/components/pixi/environments/environment";
 import { Button } from "@/components/shadcn/button";
@@ -17,15 +17,29 @@ export function Environments() {
   const { search = "" } = getRouteApi("/workspace/$path/").useSearch();
   const navigate = getRouteApi("/workspace/$path").useNavigate();
 
-  const updateSearch = (value: string) => {
-    navigate({
-      search: (prev) => ({ ...prev, search: value }),
-      replace: true,
-    });
-  };
+  // Local state for immediate input response
+  const [localSearch, setLocalSearch] = useState(search);
+
+  // Sync local state when URL search changes externally
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  // Debounced URL update
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (localSearch !== search) {
+        navigate({
+          search: (prev) => ({ ...prev, search: localSearch }),
+          replace: true,
+        });
+      }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [localSearch, search, navigate]);
 
   const hasAnyResults = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+    const normalizedSearch = localSearch.trim().toLowerCase();
     if (!normalizedSearch) return true;
 
     return Object.entries(tasks).some(([, envTasks]) =>
@@ -33,7 +47,7 @@ export function Environments() {
         taskName.trim().toLowerCase().includes(normalizedSearch),
       ),
     );
-  }, [tasks, search]);
+  }, [tasks, localSearch]);
 
   // Check if workspace is empty (no tasks and no dependencies)
   const isWorkspaceEmpty = useMemo(() => {
@@ -75,8 +89,8 @@ export function Environments() {
     <>
       <div className="mt-pfx-m">
         <Input
-          value={search}
-          onChange={(event) => updateSearch(event.target.value)}
+          value={localSearch}
+          onChange={(event) => setLocalSearch(event.target.value)}
           placeholder="Search…"
           autoComplete="off"
           spellCheck={false}
@@ -98,7 +112,7 @@ export function Environments() {
               key={environmentName}
               name={environmentName}
               tasks={envTasks}
-              filter={search}
+              filter={localSearch}
             />
           );
         })}
@@ -107,7 +121,7 @@ export function Environments() {
           <EmptyHeader>
             <EmptyTitle>No results found</EmptyTitle>
             <EmptyDescription>
-              No tasks match &quot;{search}&quot;
+              No tasks match &quot;{localSearch}&quot;
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
