@@ -46,12 +46,14 @@ pub async fn search_wildcard<R: Runtime>(
             match_spec,
             channels,
             vec![Platform::current(), Platform::NoArch],
+            None,
         )
         .await?;
 
     let mut seen_packages = HashSet::new();
 
     let deduplicated_packages: Vec<RepoDataRecord> = packages
+        .packages
         .into_iter()
         .filter(|record| seen_packages.insert(record.package_record.name.clone()))
         .collect();
@@ -83,7 +85,9 @@ pub async fn search_exact<R: Runtime>(
             match_spec,
             channels,
             vec![Platform::current(), Platform::NoArch],
+            Some(0),
         )
-        .await?,
+        .await?
+        .packages,
     ))
 }
