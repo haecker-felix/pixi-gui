@@ -25,54 +25,52 @@ export function CommandPreview({
 
   return (
     <div className="grid grid-cols-[1fr_auto] items-center rounded-pfx-s bg-pfxgsl-200 dark:bg-pfxgsd-600">
-      <code className="flex min-h-12 flex-wrap items-center gap-y-1 px-pfx-m py-pfx-s text-xs">
-        {parts.map((part, index) => {
-          if (part.kind === "text") {
-            return (
-              <span key={index} className="whitespace-pre-wrap break-all">
-                {part.value}
-              </span>
-            );
-          }
+      <code className="flex min-h-12 items-center px-pfx-m py-pfx-s text-xs">
+        <span className="whitespace-pre-wrap wrap-break-word leading-6">
+          {parts.map((part) => {
+            if (part.kind === "text") {
+              return <span key={part.offset}>{part.value}</span>;
+            }
 
-          const handleClick = onArgumentClick
-            ? () => onArgumentClick(part.name)
-            : undefined;
+            const handleClick = onArgumentClick
+              ? () => onArgumentClick(part.name)
+              : undefined;
 
-          if (part.resolved) {
+            if (part.resolved) {
+              return (
+                <span
+                  key={part.offset}
+                  role={handleClick ? "button" : undefined}
+                  className={`inline-block break-all rounded leading-4 bg-pfx-good/90 px-0.5 font-bold text-black ${handleClick ? "cursor-pointer" : ""}`}
+                  onClick={handleClick}
+                >
+                  {part.resolved}
+                </span>
+              );
+            }
+
             return (
               <span
-                key={index}
+                key={part.offset}
                 role={handleClick ? "button" : undefined}
-                className={`inline-block break-all rounded bg-pfx-good/90 px-0.5 font-bold text-black ${handleClick ? "cursor-pointer" : ""}`}
+                className={`inline-block break-all rounded leading-4 bg-orange-400/85 px-0.5 font-bold text-black ${handleClick ? "cursor-pointer" : ""}`}
                 onClick={handleClick}
               >
-                {part.resolved}
+                {"{{ "}
+                {part.name}
+                {" }}"}
               </span>
             );
-          }
-
-          return (
-            <span
-              key={index}
-              role={handleClick ? "button" : undefined}
-              className={`inline-block break-all rounded bg-orange-400/85 px-0.5 font-bold text-black ${handleClick ? "cursor-pointer" : ""}`}
-              onClick={handleClick}
-            >
-              {"{{ "}
-              {part.name}
-              {" }}"}
-            </span>
-          );
-        })}
-        {appended.trim() && (
-          <>
-            <span className="whitespace-pre"> </span>
-            <span className="inline-block break-all rounded bg-pfx-good/90 px-0.5 font-bold text-black">
-              {appended.trim()}
-            </span>
-          </>
-        )}
+          })}
+          {appended.trim() && (
+            <>
+              {" "}
+              <span className="inline-block break-all rounded leading-4 bg-pfx-good/90 px-0.5 font-bold text-black">
+                {appended.trim()}
+              </span>
+            </>
+          )}
+        </span>
       </code>
       {suffix && (
         <div className="flex items-center gap-1 px-pfx-xs">{suffix}</div>
@@ -82,8 +80,8 @@ export function CommandPreview({
 }
 
 type CommandPart =
-  | { kind: "text"; value: string }
-  | { kind: "variable"; name: string; resolved?: string };
+  | { kind: "text"; offset: number; value: string }
+  | { kind: "variable"; offset: number; name: string; resolved?: string };
 
 function parseCommand(
   command: string,
@@ -99,6 +97,7 @@ function parseCommand(
     if (match.index > lastIndex) {
       parts.push({
         kind: "text",
+        offset: lastIndex,
         value: command.slice(lastIndex, match.index),
       });
     }
@@ -111,6 +110,7 @@ function parseCommand(
 
     parts.push({
       kind: "variable",
+      offset: match.index,
       name: varName,
       resolved,
     });
@@ -119,7 +119,11 @@ function parseCommand(
   }
 
   if (lastIndex < command.length) {
-    parts.push({ kind: "text", value: command.slice(lastIndex) });
+    parts.push({
+      kind: "text",
+      offset: lastIndex,
+      value: command.slice(lastIndex),
+    });
   }
 
   return parts;

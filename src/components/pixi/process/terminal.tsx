@@ -40,8 +40,8 @@ export function Terminal({ id, isRunning, onDimensionsChange }: TerminalProps) {
   });
   const isRunningRef = useRef(isRunning);
   const onDimensionsChangeRef = useRef(onDimensionsChange);
-  const bufferLoaded = useRef(false);
-  const pendingData = useRef<string[]>([]);
+  const bufferLoadedRef = useRef(false);
+  const pendingDataRef = useRef<string[]>([]);
 
   useEffect(() => {
     isRunningRef.current = isRunning;
@@ -54,40 +54,40 @@ export function Terminal({ id, isRunning, onDimensionsChange }: TerminalProps) {
   useEffect(() => {
     if (!instance) return;
 
-    bufferLoaded.current = false;
-    pendingData.current = [];
+    bufferLoadedRef.current = false;
+    pendingDataRef.current = [];
 
     // Restore terminal buffer. Events are queued until the buffer
     // is loaded to prevent mixing stale and fresh output.
     getPtyBuffer(id)
       .then((buffer) => {
-        if (bufferLoaded.current) return;
-        bufferLoaded.current = true;
+        if (bufferLoadedRef.current) return;
+        bufferLoadedRef.current = true;
         if (buffer) instance.write(buffer);
-        for (const data of pendingData.current) instance.write(data);
-        pendingData.current = [];
+        for (const data of pendingDataRef.current) instance.write(data);
+        pendingDataRef.current = [];
       })
       .catch((error) => {
-        if (bufferLoaded.current) return;
-        bufferLoaded.current = true;
+        if (bufferLoadedRef.current) return;
+        bufferLoadedRef.current = true;
         console.error("Failed to load PTY buffer:", error);
-        for (const data of pendingData.current) instance.write(data);
-        pendingData.current = [];
+        for (const data of pendingDataRef.current) instance.write(data);
+        pendingDataRef.current = [];
       });
 
     // Reset terminal when a new PTY session starts
     const unsubscribeStart = subscribe<{ id: string }>("pty-start", (event) => {
       if (id !== event.id) return;
       instance.reset();
-      bufferLoaded.current = true;
-      pendingData.current = [];
+      bufferLoadedRef.current = true;
+      pendingDataRef.current = [];
     });
 
     // PTY Data -> Terminal
     const unsubscribeData = subscribe<PtyDataEvent>("pty-data", (event) => {
       if (id !== event.id) return;
-      if (!bufferLoaded.current) {
-        pendingData.current.push(event.data);
+      if (!bufferLoadedRef.current) {
+        pendingDataRef.current.push(event.data);
         return;
       }
       instance.write(event.data);

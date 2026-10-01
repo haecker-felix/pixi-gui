@@ -1,8 +1,9 @@
-import { type CSSProperties, type ReactNode, forwardRef } from "react";
+import type { CSSProperties, ReactNode, Ref } from "react";
 
 import { cn } from "@/lib/utils";
 
 interface RowProps {
+  ref?: Ref<HTMLLIElement>;
   title: string;
   subtitle?: string;
   prefix?: ReactNode;
@@ -13,10 +14,17 @@ interface RowProps {
   style?: CSSProperties;
 }
 
-export const Row = forwardRef<HTMLLIElement, RowProps>(function Row(
-  { title, subtitle, prefix, suffix, onClick, property, className, style },
+export function Row({
   ref,
-) {
+  title,
+  subtitle,
+  prefix,
+  suffix,
+  onClick,
+  property,
+  className,
+  style,
+}: RowProps) {
   return (
     <li
       ref={ref}
@@ -65,4 +73,4 @@ export const Row = forwardRef<HTMLLIElement, RowProps>(function Row(
       )}
     </li>
   );
-});
+}

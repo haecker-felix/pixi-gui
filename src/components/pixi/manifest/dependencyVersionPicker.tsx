@@ -75,6 +75,13 @@ export function DependencyVersionPicker({
 
           const uniqueVersions = Array.from(versionMap.values()).reverse();
           setAvailableVersions(uniqueVersions);
+
+          // Clear input if current version exists in the loaded list
+          setInputValue((prev) =>
+            uniqueVersions.some((record) => `==${record.version}` === prev)
+              ? ""
+              : prev,
+          );
         }
       } catch (err) {
         setError(`Failed to list available versions: ${err}`);
@@ -85,16 +92,6 @@ export function DependencyVersionPicker({
 
     void loadVersions();
   }, [workspaceRoot, packageName, packageType]);
-
-  // Clear input if current version exists in the loaded list (runs once after versions load)
-  useEffect(() => {
-    if (
-      inputValue &&
-      availableVersions.some((record) => `==${record.version}` === inputValue)
-    ) {
-      setInputValue("");
-    }
-  }, [inputValue, availableVersions]);
 
   // Non-editable state
   if (packageVersion.type === "non-editable") {

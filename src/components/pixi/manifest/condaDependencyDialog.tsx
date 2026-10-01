@@ -111,12 +111,7 @@ export function CondaDependencyDialog({
 
   // Package search
   useEffect(() => {
-    // Clear results immediately when search changes
-    setSearchResults([]);
-    setError("");
-
     if (!packageSearch.trim() || packageSearch.trim().length < 2) {
-      setIsSearching(false);
       return;
     }
 
@@ -326,7 +321,13 @@ export function CondaDependencyDialog({
                 <Input
                   placeholder="Search for Conda packages…"
                   value={packageSearch}
-                  onChange={(event) => setPackageSearch(event.target.value)}
+                  onChange={(event) => {
+                    setPackageSearch(event.target.value);
+                    // Clear results immediately when search changes
+                    setSearchResults([]);
+                    setError("");
+                    setIsSearching(false);
+                  }}
                   icon={<SearchIcon />}
                   suffix={isSearching && <Spinner />}
                 />
