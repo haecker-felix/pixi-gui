@@ -1,2 +1,3 @@
 pixi.lock
 pnpm-lock.yaml
+src/routeTree.gen.ts
