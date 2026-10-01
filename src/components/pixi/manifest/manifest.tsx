@@ -1,6 +1,6 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { CircularIcon } from "@/components/common/circularIcon";
 import { PreferencesGroup } from "@/components/common/preferencesGroup";
@@ -40,14 +40,18 @@ export function Manifest() {
     features[0].name === "default";
 
   const [name, setName] = useState(workspace.name);
-  useEffect(() => {
+  const [prevName, setPrevName] = useState(workspace.name);
+  if (workspace.name !== prevName) {
+    setPrevName(workspace.name);
     setName(workspace.name);
-  }, [workspace.name]);
+  }
 
   const [description, setDescription] = useState(workspace.description ?? "");
-  useEffect(() => {
+  const [prevDescription, setPrevDescription] = useState(workspace.description);
+  if (workspace.description !== prevDescription) {
+    setPrevDescription(workspace.description);
     setDescription(workspace.description ?? "");
-  }, [workspace.description]);
+  }
 
   const handleNameChange = async (name: string) => {
     if (name === workspace.name) return;
@@ -71,9 +75,11 @@ export function Manifest() {
   const [localFeatures, setLocalFeatures] = useState<FeatureData[]>(features);
 
   // Sync localFeatures when features from loader changes
-  useEffect(() => {
+  const [prevFeatures, setPrevFeatures] = useState(features);
+  if (features !== prevFeatures) {
+    setPrevFeatures(features);
     setLocalFeatures(features);
-  }, [features]);
+  }
 
   return (
     <>

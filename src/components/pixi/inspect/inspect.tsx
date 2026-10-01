@@ -52,26 +52,34 @@ export function Inspect() {
   const [selectedPlatform, setSelectedPlatform] =
     useState<string>(currentPlatform);
 
+  // Fall back to the current platform when the environment doesn't support the selected one
+  const availablePlatforms = platforms[selectedEnvironment] ?? [];
+  const effectivePlatform = availablePlatforms.includes(selectedPlatform)
+    ? selectedPlatform
+    : currentPlatform;
+
   const [viewMode, setViewMode] = useState<"list" | "tree" | "inverted-tree">(
     "list",
   );
   const [showVirtualPackages, setShowVirtualPackages] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(
-    new Set(DEFAULT_VISIBLE_COLUMNS),
+    () => new Set(DEFAULT_VISIBLE_COLUMNS),
   );
   const [maximized, setMaximized] = useState(false);
 
   const [packages, setPackages] = useState<Package[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
 
   const [sortColumn, setSortColumn] = useState<SortColumn>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   // Sync local state when URL search changes externally
-  useEffect(() => {
+  const [prevSearch, setPrevSearch] = useState(search);
+  if (search !== prevSearch) {
+    setPrevSearch(search);
     setLocalSearch(search);
-  }, [search]);
+  }
 
   // Debounced URL update
   useEffect(() => {
@@ -92,31 +100,19 @@ export function Inspect() {
 
     listPackages(workspace.root, {
       environment: selectedEnvironment,
-      platform: selectedPlatform,
+      platform: effectivePlatform,
     }).then((pkgs) => {
       if (!cancelled) {
         setPackages(pkgs);
+        // Reset expanded nodes when refetching
+        setExpanded(new Set());
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [workspace.root, selectedEnvironment, selectedPlatform]);
-
-  // Reset platform when environment changes and current platform is unavailable
-  const availablePlatforms = platforms[selectedEnvironment] ?? [];
-  useEffect(() => {
-    const available = platforms[selectedEnvironment] ?? [];
-    if (!available.includes(selectedPlatform)) {
-      setSelectedPlatform(currentPlatform);
-    }
-  }, [platforms, selectedEnvironment, selectedPlatform, currentPlatform]);
-
-  // Reset expanded nodes when switching modes or refetching
-  useEffect(() => {
-    setExpanded(new Set());
-  }, [viewMode, packages]);
+  }, [workspace.root, selectedEnvironment, effectivePlatform]);
 
   // Extract virtual packages from dependency specs
   const realNames = new Set(packages.map((p) => p.name));
@@ -221,18 +217,21 @@ export function Inspect() {
     const parts = text.split(
       new RegExp(`(${needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"),
     );
-    return parts.map((part, i) =>
-      part.toLowerCase() === needle ? (
+    let offset = 0;
+    return parts.map((part) => {
+      const start = offset;
+      offset += part.length;
+      return part.toLowerCase() === needle ? (
         <mark
-          key={i}
+          key={start}
           className="bg-primary/70 dark:bg-primary/50 text-inherit rounded-sm"
         >
           {part}
         </mark>
       ) : (
         part
-      ),
-    );
+      );
+    });
   }
 
   function renderTreeRows(
@@ -360,14 +359,14 @@ export function Inspect() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary">
                     <CpuIcon />
-                    {selectedPlatform}
+                    {effectivePlatform}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Platform</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuRadioGroup
-                    value={selectedPlatform}
+                    value={effectivePlatform}
                     onValueChange={setSelectedPlatform}
                   >
                     {[...availablePlatforms].sort().map((p) => (
@@ -405,9 +404,11 @@ export function Inspect() {
                   <DropdownMenuSeparator />
                   <DropdownMenuRadioGroup
                     value={viewMode}
-                    onValueChange={(v) =>
-                      setViewMode(v as "list" | "tree" | "inverted-tree")
-                    }
+                    onValueChange={(v) => {
+                      setViewMode(v as "list" | "tree" | "inverted-tree");
+                      // Reset expanded nodes when switching modes
+                      setExpanded(new Set());
+                    }}
                   >
                     <DropdownMenuRadioItem
                       value="list"

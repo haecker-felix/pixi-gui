@@ -22,6 +22,7 @@ pub async fn add_conda_deps<R: Runtime>(
     spawn_local(move || async move {
         let git_options = GitOptions {
             git: None,
+            path: None,
             reference: GitReference::DefaultBranch,
             subdir: None,
         };

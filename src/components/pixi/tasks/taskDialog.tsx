@@ -317,7 +317,12 @@ export function TaskDialog({
 
   const addEnvVar = () => {
     if (newEnvKey.trim()) {
-      setEnvVars([...envVars, { key: newEnvKey.trim(), value: newEnvValue }]);
+      const key = newEnvKey.trim();
+      // Replace an existing variable with the same key
+      setEnvVars([
+        ...envVars.filter((v) => v.key !== key),
+        { key, value: newEnvValue },
+      ]);
       setNewEnvKey("");
       setNewEnvValue("");
     }
@@ -428,6 +433,8 @@ export function TaskDialog({
                     .some((prev) => !!argDefaults[prev]);
 
                   return (
+                    // Index is used as key so the input keeps focus while the argument is renamed
+                    // eslint-disable-next-line @eslint-react/no-array-index-key
                     <div key={index} className="flex items-center gap-pfx-s">
                       <Input
                         label="Argument"
@@ -487,7 +494,7 @@ export function TaskDialog({
                   {/* Dependencies */}
                   <PreferencesGroup title="Dependencies" nested>
                     {dependencies.map((dep, index) => (
-                      <div key={index} className="flex items-center gap-pfx-s">
+                      <div key={dep} className="flex items-center gap-pfx-s">
                         <Input value={dep} readOnly className="flex-1" />
                         <Button
                           type="button"
@@ -539,7 +546,7 @@ export function TaskDialog({
                       Inputs
                     </p>
                     {inputs.map((input, index) => (
-                      <div key={index} className="flex items-center gap-pfx-s">
+                      <div key={input} className="flex items-center gap-pfx-s">
                         <Input value={input} readOnly className="flex-1" />
                         <Button
                           type="button"
@@ -579,7 +586,7 @@ export function TaskDialog({
                       Outputs
                     </p>
                     {outputs.map((output, index) => (
-                      <div key={index} className="flex items-center gap-pfx-s">
+                      <div key={output} className="flex items-center gap-pfx-s">
                         <Input value={output} readOnly className="flex-1" />
                         <Button
                           type="button"
@@ -619,7 +626,10 @@ export function TaskDialog({
                   {/* Environment Variables */}
                   <PreferencesGroup title="Environment Variables" nested>
                     {envVars.map((envVar, index) => (
-                      <div key={index} className="flex items-center gap-pfx-s">
+                      <div
+                        key={envVar.key}
+                        className="flex items-center gap-pfx-s"
+                      >
                         <Input
                           value={envVar.key}
                           readOnly

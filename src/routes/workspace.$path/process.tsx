@@ -9,7 +9,7 @@ import {
   PlayIcon,
   Square,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { CommandPreview } from "@/components/pixi/process/commandPreview";
 import { Terminal } from "@/components/pixi/process/terminal";
@@ -93,13 +93,12 @@ function ProcessComponent() {
       replace: true,
     });
   };
+
   // Track terminal dimensions so we can pass them when creating a PTY
   const [terminalDims, setTerminalDims] = useState<{
     cols: number;
     rows: number;
   } | null>(null);
-  const terminalDimsRef = useRef(terminalDims);
-  terminalDimsRef.current = terminalDims;
   const onDimensionsChange = useCallback((cols: number, rows: number) => {
     setTerminalDims({ cols, rows });
   }, []);
@@ -151,7 +150,7 @@ function ProcessComponent() {
   const runnable = canRunDirectly(args, savedArgValues);
 
   const handleStart = () => {
-    const dims = terminalDimsRef.current!;
+    const dims = terminalDims!;
     void start(
       resolveTaskArgs(savedArgValues ?? { values: {} }, args),
       dims.cols,
@@ -164,7 +163,7 @@ function ProcessComponent() {
     setArgsDialogOpen(false);
     setSavedArgValues(values);
     await saveTaskArgs(workspace.root, environment, taskName, values);
-    const dims = terminalDimsRef.current!;
+    const dims = terminalDims!;
     void start(resolveTaskArgs(values, args), dims.cols, dims.rows);
   };
 

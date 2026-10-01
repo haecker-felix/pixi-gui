@@ -33,7 +33,9 @@ export function Debug() {
   };
 
   useEffect(() => {
-    refreshPtys();
+    listPtys()
+      .then(setActivePtys)
+      .catch((err) => console.error("Failed to list PTYs:", err));
   }, []);
 
   const handleReinstall = async () => {

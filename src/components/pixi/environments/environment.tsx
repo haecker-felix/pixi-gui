@@ -42,7 +42,7 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
   const [commandInput, setCommandInput] = useState("");
   const [runningCommands, setRunningCommands] = useState<
     Map<string, { command: string; editor?: Editor }>
-  >(new Map());
+  >(() => new Map());
 
   // Editor
   const [lastEditor, setLastEditor] = useState<Editor | null>(null);

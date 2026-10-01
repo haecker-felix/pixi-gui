@@ -1,10 +1,10 @@
+import eslintReact from "@eslint-react/eslint-plugin";
 import { includeIgnoreFile } from "@eslint/compat";
 import css from "@eslint/css";
 import js from "@eslint/js";
 import jsonc from "@eslint/json";
 import markdown from "@eslint/markdown";
 import prettier from "eslint-config-prettier/flat";
-import pluginReact from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
@@ -27,17 +27,9 @@ export default defineConfig([
   {
     files: ["**/*.{jsx,tsx}"],
     extends: [
-      pluginReact.configs.flat.recommended,
+      eslintReact.configs["recommended-typescript"],
       reactHooks.configs.flat.recommended,
     ],
-    settings: {
-      react: {
-        version: "detect",
-      },
-    },
-    rules: {
-      "react/react-in-jsx-scope": "off",
-    },
   },
   // JSON Files
   {
