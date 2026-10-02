@@ -67,9 +67,14 @@ jobs:
         with:
           environments: packaging
           cache-write: ${{ github.ref == 'refs/heads/main' }}
+      - name: Resolve Rust version
+        id: rust
+        shell: bash
+        run: echo "version=$(pixi run --environment=packaging build-package --rust-version)" >> "$GITHUB_OUTPUT"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: src-tauri -> ../output/bld/target-cache
+          key: rust-${{ steps.rust.outputs.version }}
           # TODO: drop the ci-improvs condition before merging
           save-if: ${{ github.ref == 'refs/heads/main' || github.head_ref == 'ci-improvs' }}
       - name: Build package
@@ -90,9 +95,14 @@ jobs:
         with:
           environments: packaging
           cache-write: ${{ github.ref == 'refs/heads/main' }}
+      - name: Resolve Rust version
+        id: rust
+        shell: bash
+        run: echo "version=$(pixi run --environment=packaging build-package --rust-version)" >> "$GITHUB_OUTPUT"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: src-tauri -> ../output/bld/target-cache
+          key: rust-${{ steps.rust.outputs.version }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build package
         run: pixi run --environment=packaging build-package
