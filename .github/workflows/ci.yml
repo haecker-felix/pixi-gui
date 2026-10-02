@@ -16,16 +16,23 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  CARGO_INCREMENTAL: 0
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: prefix-dev/setup-pixi@v0.10.2
-      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
-          pr-comment: false
-          cache-key-prefix: kache-${{ github.job }}-${{ hashFiles('pixi.lock') }}
+          cache-write: ${{ github.ref == 'refs/heads/main' }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: src-tauri
+          key: ${{ hashFiles('pixi.lock') }}
+          # TODO: drop the ci-improvs condition before merging
+          save-if: ${{ github.ref == 'refs/heads/main' || github.head_ref == 'ci-improvs' }}
       - name: Run lint check
         run: pixi run lint
 
@@ -34,10 +41,14 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: prefix-dev/setup-pixi@v0.10.2
-      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
-          pr-comment: false
-          cache-key-prefix: kache-${{ github.job }}-${{ hashFiles('pixi.lock') }}
+          cache-write: ${{ github.ref == 'refs/heads/main' }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: src-tauri
+          key: ${{ hashFiles('pixi.lock') }}
+          # TODO: drop the ci-improvs condition before merging
+          save-if: ${{ github.ref == 'refs/heads/main' || github.head_ref == 'ci-improvs' }}
       - name: Run tests
         run: pixi run backend-test
 
@@ -52,26 +63,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
-        with:
-          # On Windows the default store (home dir) is on C: while the workspace is on D:, so kache can't hardlink into target/
-          # https://github.com/kunobi-ninja/kache-action#cache-location
-          cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
-          pr-comment: false
-          cache-key-prefix: kache-${{ github.job }}
-      # The cc crate prefixes C compiles with RUSTC_WRAPPER when its file name
-      # is "kache", but kache can't handle MSVC cl.exe and fails. Under any
-      # other name cc leaves C compiles alone while kache still wraps rustc.
-      - name: Rename kache wrapper
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $wrapper = Join-Path $env:RUNNER_TEMP 'kache-wrapper.exe'
-          Copy-Item $env:RUSTC_WRAPPER $wrapper
-          "RUSTC_WRAPPER=$wrapper" >> $env:GITHUB_ENV
       - uses: prefix-dev/setup-pixi@v0.10.2
         with:
           environments: packaging
+          cache-write: ${{ github.ref == 'refs/heads/main' }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: src-tauri -> ../output/bld/target-cache
+          # TODO: drop the ci-improvs condition before merging
+          save-if: ${{ github.ref == 'refs/heads/main' || github.head_ref == 'ci-improvs' }}
       - name: Build package
         run: pixi run --environment=packaging build-package
         env:
@@ -86,13 +86,14 @@ jobs:
     runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
-        with:
-          pr-comment: false
-          cache-key-prefix: kache-${{ github.job }}
       - uses: prefix-dev/setup-pixi@v0.10.2
         with:
           environments: packaging
+          cache-write: ${{ github.ref == 'refs/heads/main' }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          workspaces: src-tauri -> ../output/bld/target-cache
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build package
         run: pixi run --environment=packaging build-package
         env:

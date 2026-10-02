@@ -50,6 +50,7 @@ def build() -> None:
             "recipe/recipe.yaml",
             "--channel",
             "https://prefix.dev/conda-forge",
+            "--no-build-id",
         ],
         env=env,
         check=True,

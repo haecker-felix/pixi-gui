@@ -12,13 +12,6 @@ source:
 build:
   number: 0
   script:
-    # The build runs under rattler-build's default strict environment
-    # isolation, which scrubs the host environment. Forward the variables the
-    # kache-action sets up so caching keeps working. 
-    env:
-      RUSTC_WRAPPER: "${{ env.get('RUSTC_WRAPPER', default='') }}"
-      KACHE_CACHE_DIR: "${{ env.get('KACHE_CACHE_DIR', default='') }}"
-      KACHE_RUNTIME_DIR: "${{ env.get('KACHE_RUNTIME_DIR', default='') }}"
     content:
       - if: osx
         then:
