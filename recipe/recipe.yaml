@@ -14,13 +14,11 @@ build:
   script:
     # The build runs under rattler-build's default strict environment
     # isolation, which scrubs the host environment. Forward the variables the
-    # sccache GitHub Actions cache backend needs so caching keeps working.
+    # kache-action sets up so caching keeps working. 
     env:
-      SCCACHE_GHA_ENABLED: "${{ env.get('SCCACHE_GHA_ENABLED', default='') }}"
-      ACTIONS_CACHE_SERVICE_V2: "${{ env.get('ACTIONS_CACHE_SERVICE_V2', default='') }}"
-      ACTIONS_RESULTS_URL: "${{ env.get('ACTIONS_RESULTS_URL', default='') }}"
-    secrets:
-      - ACTIONS_RUNTIME_TOKEN
+      RUSTC_WRAPPER: "${{ env.get('RUSTC_WRAPPER', default='') }}"
+      KACHE_CACHE_DIR: "${{ env.get('KACHE_CACHE_DIR', default='') }}"
+      KACHE_RUNTIME_DIR: "${{ env.get('KACHE_RUNTIME_DIR', default='') }}"
     content:
       - if: osx
         then:
@@ -28,7 +26,6 @@ build:
           - export RUSTFLAGS="-l framework=WebKit"
       - if: unix
         then:
-          - export RUSTC_WRAPPER=sccache
           - unset CI
           - TARGET=${TARGET:-$(rustc -vV | grep "host:" | awk '{print $2}')}
           - export CARGO_TARGET_DIR=${{ SRC_DIR }}/../../target-cache
@@ -59,7 +56,6 @@ build:
               - if not exist C:\\cargo-home mkdir C:\\cargo-home
               - set CARGO_HOME=C:\\cargo-home
 
-          - set RUSTC_WRAPPER=sccache
           - set CI=
           - set CARGO_TARGET_DIR=%SRC_DIR%\..\..\target-cache
           - cmd /c "pnpm install"
@@ -75,11 +71,6 @@ build:
           - copy /Y "%RECIPE_DIR%\menu.json" "%PREFIX%\Menu\%PKG_NAME%_menu.json"
           - copy /Y "%SRC_DIR%\src-tauri\icons\icon.ico" "%PREFIX%\Menu\icon.ico"
 
-      # Stop the sccache server so it releases its file handles on the build
-      # tree. On Windows those open handles block rattler-build from cleaning up
-      # before the test phase, which fails with "Access is denied".
-      - sccache --stop-server
-
 requirements:
   build:
     - ${{ compiler('rust') }}
@@ -87,9 +78,6 @@ requirements:
     - cargo-bundle-licenses
     - nodejs
     - pnpm
-    # Must match the sccache pin in pixi.toml, the client from the default
-    # environment talks to the server started in this build environment
-    - sccache >=0.15,<0.16
     - if: linux
       then:
         - pkg-config
