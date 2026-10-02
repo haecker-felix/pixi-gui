@@ -31,8 +31,7 @@ jobs:
         with:
           workspaces: src-tauri
           key: ${{ hashFiles('pixi.lock') }}
-          # TODO: drop the ci-improvs condition before merging
-          save-if: ${{ github.ref == 'refs/heads/main' || github.head_ref == 'ci-improvs' }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Run lint check
         run: pixi run lint
 
@@ -47,8 +46,7 @@ jobs:
         with:
           workspaces: src-tauri
           key: ${{ hashFiles('pixi.lock') }}
-          # TODO: drop the ci-improvs condition before merging
-          save-if: ${{ github.ref == 'refs/heads/main' || github.head_ref == 'ci-improvs' }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Run tests
         run: pixi run backend-test
 
@@ -75,8 +73,7 @@ jobs:
         with:
           workspaces: src-tauri -> ../output/bld/target-cache
           key: rust-${{ steps.rust.outputs.version }}
-          # TODO: drop the ci-improvs condition before merging
-          save-if: ${{ github.ref == 'refs/heads/main' || github.head_ref == 'ci-improvs' }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build package
         run: pixi run --environment=packaging build-package
         env:
