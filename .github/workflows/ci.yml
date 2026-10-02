@@ -61,6 +61,17 @@ jobs:
           cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
           pr-comment: false
 
+      # The cc crate prefixes C compiles with RUSTC_WRAPPER when its file name
+      # is "kache", but kache can't handle MSVC cl.exe and fails. Under any
+      # other name cc leaves C compiles alone while kache still wraps rustc.
+      - name: Rename kache wrapper
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $wrapper = Join-Path $env:RUNNER_TEMP 'kache-wrapper.exe'
+          Copy-Item $env:RUSTC_WRAPPER $wrapper
+          "RUSTC_WRAPPER=$wrapper" >> $env:GITHUB_ENV
+
       - uses: prefix-dev/setup-pixi@v0.10.2
         with:
           environments: packaging
