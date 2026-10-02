@@ -25,7 +25,7 @@ jobs:
       - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
           pr-comment: false
-          cache-key-prefix: kache-${{ github.job }}
+          cache-key-prefix: kache-${{ github.job }}-${{ hashFiles('pixi.lock') }}
       - name: Run lint check
         run: pixi run lint
 
@@ -37,7 +37,7 @@ jobs:
       - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
           pr-comment: false
-          cache-key-prefix: kache-${{ github.job }}
+          cache-key-prefix: kache-${{ github.job }}-${{ hashFiles('pixi.lock') }}
       - name: Run tests
         run: pixi run backend-test
 
