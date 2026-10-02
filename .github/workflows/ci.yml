@@ -21,13 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: prefix-dev/setup-pixi@v0.10.2
       - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
           pr-comment: false
           cache-key-prefix: kache-${{ github.job }}
-
-      - uses: prefix-dev/setup-pixi@v0.10.2
-
       - name: Run lint check
         run: pixi run lint
 
@@ -35,13 +33,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: prefix-dev/setup-pixi@v0.10.2
       - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
           pr-comment: false
           cache-key-prefix: kache-${{ github.job }}
-
-      - uses: prefix-dev/setup-pixi@v0.10.2
-
       - name: Run tests
         run: pixi run backend-test
 
@@ -63,7 +59,6 @@ jobs:
           cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
           pr-comment: false
           cache-key-prefix: kache-${{ github.job }}
-
       # The cc crate prefixes C compiles with RUSTC_WRAPPER when its file name
       # is "kache", but kache can't handle MSVC cl.exe and fails. Under any
       # other name cc leaves C compiles alone while kache still wraps rustc.
@@ -74,17 +69,14 @@ jobs:
           $wrapper = Join-Path $env:RUNNER_TEMP 'kache-wrapper.exe'
           Copy-Item $env:RUSTC_WRAPPER $wrapper
           "RUSTC_WRAPPER=$wrapper" >> $env:GITHUB_ENV
-
       - uses: prefix-dev/setup-pixi@v0.10.2
         with:
           environments: packaging
-
       - name: Build package
         run: pixi run --environment=packaging build-package
         env:
           RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: true
           RATTLER_BUILD_COLOR: always
-
       - name: Upload package
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: pixi run --environment=packaging upload-package
@@ -98,16 +90,13 @@ jobs:
         with:
           pr-comment: false
           cache-key-prefix: kache-${{ github.job }}
-
       - uses: prefix-dev/setup-pixi@v0.10.2
         with:
           environments: packaging
-
       - name: Build package
         run: pixi run --environment=packaging build-package
         env:
           RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: true
           RATTLER_BUILD_COLOR: always
-
       - name: Upload package
         run: pixi run --environment=packaging upload-package
