@@ -24,6 +24,7 @@ jobs:
       - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
           pr-comment: false
+          cache-key-prefix: kache-${{ github.job }}
 
       - uses: prefix-dev/setup-pixi@v0.10.2
 
@@ -37,6 +38,7 @@ jobs:
       - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
           pr-comment: false
+          cache-key-prefix: kache-${{ github.job }}
 
       - uses: prefix-dev/setup-pixi@v0.10.2
 
@@ -60,6 +62,7 @@ jobs:
           # https://github.com/kunobi-ninja/kache-action#cache-location
           cache-dir: ${{ runner.os == 'Windows' && format('{0}/kache', runner.temp) || '' }}
           pr-comment: false
+          cache-key-prefix: kache-${{ github.job }}
 
       # The cc crate prefixes C compiles with RUSTC_WRAPPER when its file name
       # is "kache", but kache can't handle MSVC cl.exe and fails. Under any
@@ -94,6 +97,7 @@ jobs:
       - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
         with:
           pr-comment: false
+          cache-key-prefix: kache-${{ github.job }}
 
       - uses: prefix-dev/setup-pixi@v0.10.2
         with:
