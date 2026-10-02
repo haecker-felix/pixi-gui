@@ -20,6 +20,13 @@ build:
       - if: unix
         then:
           - unset CI
+          # The compiler activation puts `-fdebug-prefix-map=...=.../$PKG_NAME-$PKG_VERSION`
+          # into CFLAGS/CXXFLAGS. Our version changes on every build, which
+          # makes the cc crate rerun all C build scripts and invalidates the
+          # cached target directory.
+          - export CFLAGS="${CFLAGS//$PKG_NAME-$PKG_VERSION/$PKG_NAME}"
+          - export CXXFLAGS="${CXXFLAGS//$PKG_NAME-$PKG_VERSION/$PKG_NAME}"
+          
           - TARGET=${TARGET:-$(rustc -vV | grep "host:" | awk '{print $2}')}
           - export CARGO_TARGET_DIR=${{ SRC_DIR }}/../../target-cache
           - pnpm install
