@@ -12,6 +12,9 @@ source:
 build:
   number: 0
   script:
+    # TODO: temporary, logs why cargo considers crates out of date
+    env:
+      CARGO_LOG: "cargo::core::compiler::fingerprint=info"
     content:
       - if: osx
         then:
