@@ -1,6 +1,6 @@
-import { invoke } from "@tauri-apps/api/core";
 import { LazyStore } from "@tauri-apps/plugin-store";
 
+import { invoke } from "@/lib/api/transport";
 import type { Workspace } from "@/lib/pixi/workspace/workspace";
 
 export interface Editor {

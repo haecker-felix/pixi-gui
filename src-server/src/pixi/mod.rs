@@ -1,13 +1,14 @@
-use tauri::Runtime;
-use tauri::Window;
+use pixi_gui_server_macros::command;
+
+use crate::frontend::Ctx;
 
 pub mod workspace;
 
-#[tauri::command]
-pub async fn pixi_version<R: Runtime>(window: Window<R>) -> String {
+#[command]
+pub async fn pixi_version(ctx: Ctx) -> String {
     pixi_api::PIXI_VERSION.to_string()
 }
-#[tauri::command]
+#[command]
 pub fn app_version() -> &'static str {
     option_env!("PIXI_GUI_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))
 }

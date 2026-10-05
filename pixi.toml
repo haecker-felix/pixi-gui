@@ -80,8 +80,8 @@ license-check = { cmd = "pnpm license-checker --onlyAllow 'Apache-2.0;BSD-3-Clau
 python-typecheck = "mypy ./scripts"
 ruff-format = "ruff format --exit-non-zero-on-format --force-exclude"
 ruff-lint = "ruff check --fix --exit-non-zero-on-fix --force-exclude"
-toml-format = { cmd = "taplo fmt *.toml src-tauri/*.toml", env = { RUST_LOG = "warn" } }
-toml-lint = "taplo lint *.toml src-tauri/*.toml --verbose"
+toml-format = { cmd = "taplo fmt *.toml src-server/*.toml src-server-macros/*.toml src-tauri/*.toml", env = { RUST_LOG = "warn" } }
+toml-lint = "taplo lint *.toml src-server/*.toml src-server-macros/*.toml src-tauri/*.toml --verbose"
 typos = "typos --force-exclude"
 
 # Combined

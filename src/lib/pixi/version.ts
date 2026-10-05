@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/api/transport";
 
 export async function getPixiVersion(): Promise<string> {
   return invoke<string>("pixi_version");
