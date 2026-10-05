@@ -13,12 +13,10 @@ build:
   number: 0
   script:
     env:
-      # Keep compiler flags (e.g. -fdebug-prefix-map=…/$PKG_NAME-$PKG_VERSION)
-      # identical between builds so cached build output stays valid. Doesn't
-      # affect the package version.
+      # Keep compiler flags (e.g. CFLAGS -fdebug-prefix-map=…/$PKG_NAME-$PKG_VERSION)
+      # identical between builds so cached build output stays valid. Doesn't affect
+      # the package version.
       PKG_VERSION: "0"
-      # TODO: temporary, logs why cargo considers crates out of date
-      CARGO_LOG: "cargo::core::compiler::fingerprint=info"
     content:
       - if: osx
         then:
