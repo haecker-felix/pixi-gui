@@ -7,7 +7,6 @@
     "core:default",
     "core:window:allow-destroy",
     "dialog:default",
-    "notification:default",
-    "store:default"
+    "notification:default"
   ]
 }
