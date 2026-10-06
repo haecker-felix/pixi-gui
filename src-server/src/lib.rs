@@ -1,10 +1,12 @@
-//! Backend of Pixi GUI, independent of the frontend's transport (Tauri IPC or HTTP).
+//! Backend of Pixi GUI, independent of the frontend's transports.
 
 #![allow(unused_variables)]
 
+pub mod confirm;
+pub mod context;
 pub mod editor;
 pub mod error;
-pub mod frontend;
+pub mod event;
 pub mod pixi;
 pub mod pty;
 pub mod router;
@@ -12,6 +14,6 @@ pub mod state;
 pub mod utils;
 pub mod watcher;
 
-pub use frontend::{Ctx, Frontend, SessionId};
+pub use context::{Ctx, SessionId};
 pub use router::{DispatchError, dispatch};
 pub use state::State;

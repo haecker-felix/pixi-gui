@@ -7,7 +7,7 @@ use pixi_api::{
 use strip_ansi_escapes::strip;
 use tokio::{runtime::Handle, task::spawn_blocking};
 
-use crate::{error::Error, frontend::Ctx};
+use crate::{context::Ctx, error::Error};
 
 /// Execute a non-`Send` future on a blocking thread while still exposing a `Send`
 /// handle to the async runtime.

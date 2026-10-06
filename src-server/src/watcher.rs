@@ -1,13 +1,15 @@
-use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
+use std::{collections::HashMap, path::PathBuf, time::Duration};
 
 use log::{debug, error};
 use miette::IntoDiagnostic;
 use notify::{EventKind, RecursiveMode};
 use notify_debouncer_full::{DebounceEventResult, Debouncer, RecommendedCache, new_debouncer};
 use pixi_gui_server_macros::command;
+use tokio::sync::mpsc;
 
+use crate::context::{Ctx, SessionId};
 use crate::error::Error;
-use crate::frontend::{Ctx, Frontend, SessionId};
+use crate::event::Event;
 
 #[derive(Default)]
 pub struct Watcher {
@@ -17,7 +19,7 @@ pub struct Watcher {
 impl Watcher {
     pub fn watch(
         &mut self,
-        frontend: Arc<dyn Frontend>,
+        sender: mpsc::UnboundedSender<Event>,
         session: SessionId,
         manifest: PathBuf,
     ) -> Result<(), miette::Error> {
@@ -43,11 +45,11 @@ impl Watcher {
 
                     if manifest_modified {
                         debug!("Manifest changed: {:?}", manifest_path_clone);
-                        frontend.emit_event(
+                        let _ = sender.send(Event::new(
                             &session_clone,
                             "manifest-changed",
                             serde_json::Value::Null,
-                        );
+                        ));
                     }
                 }
                 Err(errs) => {
@@ -84,7 +86,7 @@ impl Watcher {
 pub async fn watch_manifest(ctx: Ctx, manifest_path: PathBuf) -> Result<(), Error> {
     let mut watcher = ctx.state.watcher().lock().await;
     watcher.watch(
-        ctx.state.frontend().clone(),
+        ctx.state.event_sender().clone(),
         ctx.session.clone(),
         manifest_path,
     )?;

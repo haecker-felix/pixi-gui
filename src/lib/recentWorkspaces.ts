@@ -1,12 +1,11 @@
-import { LazyStore } from "@tauri-apps/plugin-store";
-
 import type { Workspace } from "@/lib/pixi/workspace/workspace";
+import { platform } from "@/lib/platform";
 
 export interface RecentWorkspaceEntry {
   manifest: string;
 }
 
-const store = new LazyStore("recent-workspaces.json");
+const store = platform.createStore("recent-workspaces.json");
 
 export async function listRecentWorkspaces(): Promise<RecentWorkspaceEntry[]> {
   return (await store.get<RecentWorkspaceEntry[]>("recentWorkspaces")) ?? [];

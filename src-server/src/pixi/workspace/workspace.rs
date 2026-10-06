@@ -15,8 +15,8 @@ use pixi_api::workspace::ChannelOptions;
 use pixi_gui_server_macros::command;
 use serde::{Deserialize, Serialize};
 
+use crate::context::Ctx;
 use crate::error::Error;
-use crate::frontend::Ctx;
 use crate::utils::{self, spawn_local};
 
 #[derive(Serialize, Deserialize)]

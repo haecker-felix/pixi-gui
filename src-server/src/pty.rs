@@ -13,7 +13,7 @@ use tokio::time::timeout;
 
 use pixi_gui_server_macros::command;
 
-use crate::{error::Error, frontend::Ctx, state::State};
+use crate::{context::Ctx, error::Error, state::State};
 
 /// How the PTY process was terminated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -411,7 +411,7 @@ pub async fn pty_create(
 
     state.add_pty(id.clone(), pty.clone()).await;
 
-    ctx.emit(
+    ctx.send_event(
         "pty-start",
         PtyStartEvent {
             id: id.clone(),
@@ -441,7 +441,7 @@ pub async fn pty_create(
                 id: id_reader.clone(),
                 data,
             };
-            ctx_reader.emit("pty-data", data_event);
+            ctx_reader.send_event("pty-data", data_event);
         }
         let _ = reader_done_tx.send(());
     });
@@ -481,7 +481,7 @@ pub async fn pty_create(
             id: id.clone(),
             data: terminated_msg,
         };
-        ctx.emit("pty-data", data_event);
+        ctx.send_event("pty-data", data_event);
 
         let exit_event = PtyExitEvent {
             id: id_clone.clone(),
@@ -496,7 +496,7 @@ pub async fn pty_create(
             state.remove_pty(&id_clone, exit_event.clone()).await;
         });
 
-        ctx.emit("pty-exit", &exit_event);
+        ctx.send_event("pty-exit", &exit_event);
 
         // Signal that the process has fully exited and cleanup is complete.
         let _ = exit_tx.send(true);

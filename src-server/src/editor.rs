@@ -16,7 +16,7 @@ use tokio::io::AsyncBufReadExt;
 use tokio::process::Command;
 use which::which;
 
-use crate::{error::Error, frontend::Ctx, pty::find_pixi_binary, utils};
+use crate::{context::Ctx, error::Error, pty::find_pixi_binary, utils};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -355,7 +355,7 @@ pub async fn open_editor(
             signal,
             stderr: output_buffer.into_vec(),
         };
-        ctx.emit("editor-failed", payload);
+        ctx.send_event("editor-failed", payload);
     });
 
     Ok(())

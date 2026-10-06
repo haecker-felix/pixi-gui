@@ -4,9 +4,10 @@ use pixi_gui_server_macros::generate_handler;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
 
+use crate::confirm;
+use crate::context::Ctx;
 use crate::editor;
 use crate::error::Error;
-use crate::frontend::Ctx;
 use crate::pixi;
 use crate::pixi::workspace::add;
 use crate::pixi::workspace::init;
@@ -91,6 +92,7 @@ pub async fn dispatch(ctx: Ctx, cmd: &str, args: Value) -> Result<Value, Dispatc
             search::search_wildcard,
             search::search_exact,
             pixi::pixi_version,
+            pixi::app_name,
             pixi::app_version,
             pty::pty_write,
             pty::pty_create,
@@ -104,6 +106,7 @@ pub async fn dispatch(ctx: Ctx, cmd: &str, args: Value) -> Result<Value, Dispatc
             editor::list_available_editors,
             editor::list_installable_editors,
             editor::open_editor,
+            confirm::answer_confirm,
         ]
     )
 }

@@ -11,8 +11,8 @@ use pixi_api::rattler_conda_types::{MatchSpec, PackageName};
 use pixi_api::workspace::DependencyOptions;
 use pixi_gui_server_macros::command;
 
+use crate::context::Ctx;
 use crate::error::Error;
-use crate::frontend::Ctx;
 use crate::utils::{self, spawn_local};
 
 #[command]

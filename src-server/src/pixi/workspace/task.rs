@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::PathBuf};
 use pixi_api::manifest::{EnvironmentName, Task, TaskName};
 use pixi_gui_server_macros::command;
 
-use crate::frontend::Ctx;
+use crate::context::Ctx;
 use crate::{error::Error, utils};
 
 #[command]

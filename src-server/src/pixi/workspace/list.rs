@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::frontend::Ctx;
+use crate::context::Ctx;
 use crate::{
     error::Error,
     utils::{self, spawn_local},

@@ -1,6 +1,5 @@
-import { LazyStore } from "@tauri-apps/plugin-store";
-
 import type { TaskArgument } from "@/lib/pixi/workspace/task";
+import { platform } from "@/lib/platform";
 
 export type TaskArgumentValues =
   | { values: Record<string, string> } // Argument name + Argument value
@@ -49,7 +48,7 @@ export function resolveTaskArgs(
   return appended ? appended.split(/\s+/) : [];
 }
 
-const store = new LazyStore("task-args.json");
+const store = platform.createStore("task-args.json");
 
 function getKey(
   workspaceRoot: string,

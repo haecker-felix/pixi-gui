@@ -194,7 +194,7 @@ fn handler(function: &ItemFn) -> syn::Result<proc_macro2::TokenStream> {
         #[doc(hidden)]
         #[allow(non_snake_case, unused_mut)]
         #vis async fn #handler_name(
-            __ctx: crate::frontend::Ctx,
+            __ctx: crate::context::Ctx,
             mut __args: ::serde_json::Value,
         ) -> ::std::result::Result<::serde_json::Value, crate::router::DispatchError> {
             #ctx_unused

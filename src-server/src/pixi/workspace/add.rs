@@ -9,8 +9,8 @@ use pixi_api::spec::GitReference;
 use pixi_api::workspace::{DependencyOptions, GitOptions};
 use pixi_gui_server_macros::command;
 
+use crate::context::Ctx;
 use crate::error::Error;
-use crate::frontend::Ctx;
 use crate::utils::{self, spawn_local};
 
 #[command]

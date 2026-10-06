@@ -1,5 +1,5 @@
+use crate::context::Ctx;
 use crate::error::format_error_chain;
-use crate::frontend::Ctx;
 use pixi_api::{WorkspaceContext, workspace::InitOptions};
 use pixi_gui_server_macros::command;
 

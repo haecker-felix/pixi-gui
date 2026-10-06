@@ -1,15 +1,12 @@
 pub mod api;
-pub mod frontend;
 pub mod platform;
 pub mod window;
 
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
 use clap::Parser;
 use pixi_gui_server::State;
-use tauri::Manager;
-
-use crate::frontend::TauriFrontend;
+use tauri::{Emitter, Manager, WindowEvent};
 
 #[derive(Parser)]
 #[command(version = option_env!("PIXI_GUI_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))]
@@ -64,9 +61,6 @@ pub fn run(workspace_path: Option<String>) {
             } else {
                 tauri_plugin_log::log::LevelFilter::Info
             })
-            .target(tauri_plugin_log::Target::new(
-                tauri_plugin_log::TargetKind::Webview,
-            ))
             .build(),
     )
     .plugin(tauri_plugin_dialog::init())
@@ -74,9 +68,27 @@ pub fn run(workspace_path: Option<String>) {
     .plugin(tauri_plugin_notification::init())
     .plugin(tauri_plugin_store::Builder::new().build())
     .invoke_handler(tauri::generate_handler![api::api, window::open_new_window,])
+    .on_window_event(|window, event| {
+        // Answer open confirm questions with "no" and stop watchers of closed windows
+        if let WindowEvent::Destroyed = event {
+            let state = window.state::<State>().inner().clone();
+            let session = window.label().to_string();
+            tauri::async_runtime::spawn(async move { state.drop_session(&session).await });
+        }
+    })
     .setup(move |app| {
-        let frontend = TauriFrontend::new(app.handle().clone());
-        app.manage(State::new(Arc::new(frontend)));
+        let (state, mut event_receiver) = State::new();
+        app.manage(state);
+
+        // Deliver backend events to the window they belong to (session = window label)
+        let app_handle = app.handle().clone();
+        tauri::async_runtime::spawn(async move {
+            while let Some(event) = event_receiver.recv().await {
+                if let Err(e) = app_handle.emit_to(&event.session, &event.name, event.payload) {
+                    log::error!("Failed to emit {} to {}: {e}", event.name, event.session);
+                }
+            }
+        });
 
         // On Linux and Windows, file associations launch a new process with the file path in CLI args
         if let Some(workspace) = &workspace_path {
