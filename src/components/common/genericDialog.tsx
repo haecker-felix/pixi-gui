@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { type FormEvent, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/shadcn/button";
 import {
@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/shadcn/dialog";
+import { Input } from "@/components/shadcn/input";
 
 /** Shows a message with an "OK" button. */
 export function showMessage(title: string, message: string): Promise<void> {
@@ -31,18 +32,47 @@ export function showConfirm(
   cancelLabel = "Cancel",
 ): Promise<boolean> {
   return new Promise((resolve) =>
-    enqueue({ kind: "confirm", title, message, okLabel, cancelLabel, resolve }),
+    enqueue({
+      kind: "confirm",
+      title,
+      message,
+      okLabel,
+      cancelLabel,
+      resolve: (ok) => resolve(ok),
+    }),
+  );
+}
+
+/** Asks the user to enter a text. */
+export function showPrompt(
+  title: string,
+  message: string,
+  defaultValue = "",
+  okLabel = "OK",
+  cancelLabel = "Cancel",
+): Promise<string | null> {
+  return new Promise((resolve) =>
+    enqueue({
+      kind: "prompt",
+      title,
+      message,
+      defaultValue,
+      okLabel,
+      cancelLabel,
+      resolve: (ok, text) => resolve(ok ? text : null),
+    }),
   );
 }
 
 interface DialogRequest {
   id: number;
-  kind: "confirm" | "message";
+  kind: "confirm" | "message" | "prompt";
   title: string;
   message: string;
+  defaultValue?: string;
   okLabel: string;
   cancelLabel?: string;
-  resolve: (value: boolean) => void;
+  resolve: (ok: boolean, text: string) => void;
 }
 
 let nextId = 0;
@@ -68,32 +98,53 @@ export function GenericDialogHost() {
   const current = useSyncExternalStore(subscribe, () => queue[0]);
   if (!current) return null;
 
-  const close = (value: boolean) => {
+  return <GenericDialog key={current.id} request={current} />;
+}
+
+function GenericDialog({ request }: { request: DialogRequest }) {
+  const [text, setText] = useState(request.defaultValue ?? "");
+
+  const close = (ok: boolean) => {
     dequeue();
-    current.resolve(value);
+    request.resolve(ok, text);
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    close(true);
   };
 
   return (
-    <Dialog
-      key={current.id}
-      open
-      onOpenChange={(open) => !open && close(false)}
-    >
+    <Dialog open onOpenChange={(open) => !open && close(false)}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{current.title}</DialogTitle>
-          <DialogDescription>{current.message}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          {current.kind === "confirm" && (
-            <Button variant="ghost" onClick={() => close(false)}>
-              {current.cancelLabel}
-            </Button>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>{request.title}</DialogTitle>
+            <DialogDescription>{request.message}</DialogDescription>
+          </DialogHeader>
+          {request.kind === "prompt" && (
+            <Input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              aria-label={request.title}
+              autoFocus
+            />
           )}
-          <Button autoFocus onClick={() => close(true)}>
-            {current.okLabel}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            {request.cancelLabel && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => close(false)}
+              >
+                {request.cancelLabel}
+              </Button>
+            )}
+            <Button type="submit" autoFocus={request.kind !== "prompt"}>
+              {request.okLabel}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

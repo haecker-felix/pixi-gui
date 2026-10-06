@@ -1,5 +1,5 @@
 import type { TaskArgument } from "@/lib/pixi/workspace/task";
-import { platform } from "@/lib/platform";
+import { createStore } from "@/lib/settings";
 
 export type TaskArgumentValues =
   | { values: Record<string, string> } // Argument name + Argument value
@@ -48,7 +48,7 @@ export function resolveTaskArgs(
   return appended ? appended.split(/\s+/) : [];
 }
 
-const store = platform.createStore("task-args.json");
+const store = createStore("task-args.json");
 
 function getKey(
   workspaceRoot: string,
@@ -78,5 +78,4 @@ export async function saveTaskArgs(
     (await store.get<Record<string, TaskArgumentValues>>("taskArgs")) ?? {};
   allArgs[getKey(workspaceRoot, environment, taskName)] = args;
   await store.set("taskArgs", allArgs);
-  await store.save();
 }

@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/shadcn/select";
 
+import { documentsDir, joinPath } from "@/lib/fs";
 import { GitAttributes, ManifestFormat, init } from "@/lib/pixi/workspace/init";
 import { platform } from "@/lib/platform";
 import { getPlatformName } from "@/lib/utils";
@@ -57,10 +58,7 @@ export function NewWorkspaceDialog({
 
   useEffect(() => {
     if (location && name.trim()) {
-      platform
-        .joinPath(location, name.trim())
-        .then(setFullPath)
-        .catch(console.error);
+      joinPath(location, name.trim()).then(setFullPath).catch(console.error);
     }
   }, [location, name]);
 
@@ -70,9 +68,7 @@ export function NewWorkspaceDialog({
       const selectedPath = await platform.pickPath({
         directory: true,
         canCreateDirectories: true,
-        defaultPath: await platform
-          .documentDir()
-          .catch(() => platform.homeDir()),
+        defaultPath: await documentsDir(),
       });
 
       if (selectedPath) {

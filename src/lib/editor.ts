@@ -1,6 +1,6 @@
 import { invoke } from "@/lib/api/transport";
 import type { Workspace } from "@/lib/pixi/workspace/workspace";
-import { platform } from "@/lib/platform";
+import { createStore } from "@/lib/settings";
 
 export interface Editor {
   command: string;
@@ -30,7 +30,7 @@ export async function listInstallableEditors(
   });
 }
 
-const store = platform.createStore("editor-preferences.json");
+const store = createStore("editor-preferences.json");
 
 function getKey(workspaceRoot: string, environment: string): string {
   return `${workspaceRoot}:${environment}`;
@@ -77,7 +77,6 @@ export async function setEditorPreference(
     (await store.get<Record<string, Editor>>("editorPreferences")) ?? {};
   preferences[getKey(workspaceRoot, environment)] = editor;
   await store.set("editorPreferences", preferences);
-  await store.save();
 }
 
 export async function openEditor(

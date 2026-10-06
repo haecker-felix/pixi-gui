@@ -66,7 +66,6 @@ pub fn run(workspace_path: Option<String>) {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_notification::init())
-    .plugin(tauri_plugin_store::Builder::new().build())
     .invoke_handler(tauri::generate_handler![api::api, window::open_new_window,])
     .on_window_event(|window, event| {
         // Answer open confirm questions with "no" and stop watchers of closed windows
