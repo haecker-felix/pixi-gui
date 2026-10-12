@@ -6,9 +6,11 @@ use std::sync::{Arc, Mutex as SyncMutex};
 use log::{debug, warn};
 use miette::Result;
 use pixi_api::Interface;
+use pixi_gui_server_macros::command;
 use tokio::sync::{Mutex, mpsc, oneshot};
 
 use crate::confirm::ConfirmRequest;
+use crate::error::Error;
 use crate::event::{Event, EventPayload};
 use crate::notification::{Notification, NotificationLevel};
 use crate::pty::{PtyExitEvent, PtyHandle};
@@ -122,7 +124,8 @@ impl Session {
         }
     }
 
-    pub(crate) async fn watch_manifest(&self, manifest: PathBuf) -> Result<()> {
+    pub(crate) async fn open_workspace(&self, manifest: PathBuf) -> Result<()> {
+        // Start watching the workspace manifest
         let mut watcher = self.watcher.lock().await;
         *watcher = None;
 
@@ -135,30 +138,59 @@ impl Session {
         Ok(())
     }
 
-    pub(crate) async fn unwatch_manifest(&self) {
-        if self.watcher.lock().await.take().is_some() {
-            debug!("Stopped watcher for session {}", self.id);
+    pub(crate) async fn close_workspace(&self) -> bool {
+        if !self.ptys().await.is_empty() {
+            let message = "Do you want to terminate running processes in this workspace?";
+            if !self.confirm(message).await.unwrap_or(false) {
+                return false;
+            }
         }
+
+        self.force_close_workspace().await;
+        true
     }
 
-    /// Cleans up after the session has ended
-    pub(crate) async fn close(&self) {
-        // Set before the cleanup, so nothing gets added again afterwards
-        self.closed.store(true, Ordering::SeqCst);
-
-        // Terminate running processes
-        let ptys = std::mem::take(&mut *self.ptys.lock().await);
-        for pty in ptys.into_values() {
-            tokio::spawn(async move { pty.kill().await });
-        }
-        self.exited_ptys.lock().await.clear();
-
+    /// Cleans up what an open workspace left behind, without asking
+    async fn force_close_workspace(&self) {
         // Dropping the senders resolves the waiting commands with "no"
         self.confirms.lock().unwrap().clear();
 
-        // Stop watching the filesystem
-        self.unwatch_manifest().await;
+        // Stop watching the manifest
+        if self.watcher.lock().await.take().is_some() {
+            debug!("Stopped watcher for session {}", self.id);
+        }
+
+        // Terminate running processes, and wait until they are gone
+        let kills: Vec<_> = self
+            .ptys()
+            .await
+            .into_iter()
+            .map(|pty| tokio::spawn(async move { pty.kill().await }))
+            .collect();
+        for kill in kills {
+            let _ = kill.await;
+        }
+        self.exited_ptys.lock().await.clear();
     }
+
+    pub(crate) async fn close_session(&self) {
+        // Set before the cleanup, so nothing gets added again afterwards
+        self.closed.store(true, Ordering::SeqCst);
+
+        // Nobody is left to ask, so this doesn't go through `close_workspace`
+        self.force_close_workspace().await;
+    }
+}
+
+#[command]
+pub async fn open_workspace(session: Session, manifest: PathBuf) -> Result<(), Error> {
+    session.open_workspace(manifest).await?;
+    Ok(())
+}
+
+#[command]
+pub async fn close_workspace(session: Session) -> bool {
+    session.close_workspace().await
 }
 
 /// Forwards messages from pixi_api to the session that called the command.

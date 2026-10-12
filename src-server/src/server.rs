@@ -152,7 +152,7 @@ impl Server {
 
         info!("Session {session} disconnected");
         self.sessions.lock().unwrap().remove(&session);
-        self.state.drop_session(&session).await;
+        self.state.close_session(&session).await;
     }
 
     /// Runs a command in the background, so long commands don't block other commands

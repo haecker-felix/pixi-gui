@@ -36,11 +36,11 @@ impl State {
             .clone()
     }
 
-    /// Cleans up after a session has ended (e.g. its window was closed)
-    pub async fn drop_session(&self, id: &SessionId) {
+    /// Cleans up after a session has ended
+    pub async fn close_session(&self, id: &SessionId) {
         let session = self.sessions.lock().unwrap().remove(id);
         if let Some(session) = session {
-            session.close().await;
+            session.close_session().await;
         }
     }
 }

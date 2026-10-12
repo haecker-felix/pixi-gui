@@ -18,10 +18,9 @@ use crate::pixi::workspace::search;
 use crate::pixi::workspace::task;
 use crate::pixi::workspace::workspace;
 use crate::pty;
-use crate::session::Session;
+use crate::session::{self, Session};
 use crate::settings;
 use crate::utils;
-use crate::watcher;
 
 #[derive(Debug)]
 pub enum DispatchError {
@@ -103,12 +102,12 @@ pub async fn dispatch(session: Session, cmd: &str, args: Value) -> Result<Value,
             pty::pty_kill,
             pty::pty_is_running,
             pty::pty_list,
-            watcher::watch_manifest,
-            watcher::unwatch_manifest,
             editor::list_available_editors,
             editor::list_installable_editors,
             editor::open_editor,
             confirm::answer_confirm,
+            session::open_workspace,
+            session::close_workspace,
             settings::settings_get,
             settings::settings_set,
             fs::fs_home_dir,

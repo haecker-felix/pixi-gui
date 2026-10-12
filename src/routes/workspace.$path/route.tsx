@@ -5,10 +5,10 @@ import {
   useBlocker,
   useRouter,
 } from "@tanstack/react-router";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
-import { showConfirm, showMessage } from "@/components/common/genericDialog";
+import { showMessage } from "@/components/common/genericDialog";
 
 import { subscribe } from "@/lib/event";
 import { type Task, listTask } from "@/lib/pixi/workspace/task";
@@ -24,9 +24,8 @@ import {
   listPlatforms,
 } from "@/lib/pixi/workspace/workspace";
 import { platform } from "@/lib/platform";
-import { killPty, listPtys } from "@/lib/pty";
 import { addRecentWorkspace } from "@/lib/recentWorkspaces";
-import { unwatchManifest, watchManifest } from "@/lib/watcher";
+import { closeWorkspace, openWorkspace } from "@/lib/session";
 
 export interface WorkspaceLoaderData {
   workspace: Workspace;
@@ -85,8 +84,8 @@ function WorkspaceLayout() {
 
   // Auto refresh when manifest changes
   useEffect(() => {
-    watchManifest(workspace.manifest).catch((error) => {
-      console.error("Failed to start manifest watcher:", error);
+    openWorkspace(workspace.manifest).catch((error) => {
+      console.error("Failed to open workspace in the backend:", error);
     });
 
     const unsubscribe = subscribe("manifest-changed", async () => {
@@ -96,9 +95,6 @@ function WorkspaceLayout() {
 
     return () => {
       unsubscribe();
-      unwatchManifest().catch((error) => {
-        console.error("Failed to stop manifest watcher:", error);
-      });
     };
   }, [workspace.manifest, router]);
 
@@ -157,29 +153,6 @@ function WorkspaceLayout() {
     };
   }, []);
 
-  // Before closing a workspace, ensure that it has no active PTYs anymore
-  const closeWorkspace = useCallback(async (): Promise<boolean> => {
-    const handles = await listPtys();
-
-    if (handles.length === 0) {
-      return true;
-    }
-
-    const shouldKill = await showConfirm(
-      "Close Workspace?",
-      "Do you want to terminate running processes in this workspace?",
-      "Terminate",
-    );
-
-    if (!shouldKill) {
-      return false;
-    }
-
-    await Promise.allSettled(handles.map((handle) => killPty(handle.id)));
-
-    return true;
-  }, []);
-
   // Window gets closed
   useEffect(() => {
     const unlisten = platform.onCloseRequested(closeWorkspace);
@@ -191,7 +164,7 @@ function WorkspaceLayout() {
           console.error("Could not unlisten workspace listener: ", reason),
         );
     };
-  }, [closeWorkspace]);
+  }, []);
 
   // User navigates away from /workspace
   useBlocker({

@@ -72,7 +72,7 @@ pub fn run(workspace_path: Option<String>) {
         if let WindowEvent::Destroyed = event {
             let state = window.state::<State>().inner().clone();
             let session: SessionId = window.label().to_string();
-            tauri::async_runtime::spawn(async move { state.drop_session(&session).await });
+            tauri::async_runtime::spawn(async move { state.close_session(&session).await });
         }
     })
     .setup(move |app| {
