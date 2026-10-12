@@ -1,6 +1,6 @@
 import type { Workspace } from "@/lib/pixi/workspace/workspace";
+import { invoke } from "@/lib/platform";
 import { createStore } from "@/lib/settings";
-import { invoke } from "@/lib/transport";
 
 export interface Editor {
   command: string;

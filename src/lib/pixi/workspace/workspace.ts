@@ -1,6 +1,6 @@
 import { LockFileUsage } from "@/lib/pixi/workspace/reinstall";
 import type { Task } from "@/lib/pixi/workspace/task";
-import { invoke } from "@/lib/transport";
+import { invoke } from "@/lib/platform";
 
 export interface Workspace {
   root: string;

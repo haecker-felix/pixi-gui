@@ -2,7 +2,7 @@ import {
   type DependencyOptions,
   type MatchSpec,
 } from "@/lib/pixi/workspace/add";
-import { invoke } from "@/lib/transport";
+import { invoke } from "@/lib/platform";
 
 export async function removeCondaDeps(
   workspace: string,

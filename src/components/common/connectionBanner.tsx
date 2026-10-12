@@ -1,14 +1,11 @@
 import { useSyncExternalStore } from "react";
 
-import {
-  isDisconnected,
-  subscribeDisconnected,
-} from "@/lib/transport/websocket";
+import { platform } from "@/lib/platform";
 
 export function ConnectionBanner() {
   const disconnected = useSyncExternalStore(
-    subscribeDisconnected,
-    isDisconnected,
+    platform.subscribeDisconnected,
+    platform.isDisconnected,
   );
 
   if (!disconnected) return null;

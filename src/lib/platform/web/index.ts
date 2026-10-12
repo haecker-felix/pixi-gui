@@ -1,15 +1,20 @@
 import { showPrompt } from "@/components/common/genericDialog";
 
-import { homeDir } from "@/lib/fs";
-import type { Platform } from "@/lib/platform/index";
+import type { Platform } from "@/lib/platform";
+import * as websocket from "@/lib/platform/web/websocket";
 
 export const webPlatform: Platform = {
-  // Browsers only hand out file contents, not paths, so the path is entered by hand
+  invoke: websocket.invoke,
+  listen: websocket.listen,
+
+  isDisconnected: websocket.isDisconnected,
+  subscribeDisconnected: websocket.subscribeDisconnected,
+
   pickPath: async ({ directory, title, defaultPath }) => {
     const path = await showPrompt(
       title ?? (directory ? "Select Folder" : "Select File"),
       "Enter a path on the server.",
-      defaultPath ?? (await homeDir()),
+      defaultPath ?? (await websocket.invoke<string>("fs_home_dir")),
       "Select",
     );
     return path?.trim() || null;
@@ -37,7 +42,6 @@ export const webPlatform: Platform = {
 
     new Notification(title, { body });
   },
-  // A tab can't be kept open to ask first. The server terminates the processes
-  // of the tab when its connection closes.
+  // The server terminates the processes of the tab when its connection closes
   onCloseRequested: async () => () => {},
 };

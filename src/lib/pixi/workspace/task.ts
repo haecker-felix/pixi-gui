@@ -1,4 +1,4 @@
-import { invoke } from "@/lib/transport";
+import { invoke } from "@/lib/platform";
 
 export type CommandArguments = { Single: string } | { Multiple: string[] };
 

@@ -1,5 +1,5 @@
 import type { MatchSpec } from "@/lib/pixi/workspace/add";
-import { invoke } from "@/lib/transport";
+import { invoke } from "@/lib/platform";
 
 export interface RepoDataRecord {
   name: string;

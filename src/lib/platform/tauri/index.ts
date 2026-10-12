@@ -7,9 +7,16 @@ import {
   sendNotification,
 } from "@tauri-apps/plugin-notification";
 
-import type { Platform } from "@/lib/platform/index";
+import type { Platform } from "@/lib/platform";
+import * as tauriIpc from "@/lib/platform/tauri/tauri_ipc";
 
-export const appPlatform: Platform = {
+export const tauriPlatform: Platform = {
+  invoke: tauriIpc.invoke,
+  listen: tauriIpc.listen,
+
+  isDisconnected: () => false, // The backend runs in the same process, we're always connected
+  subscribeDisconnected: () => () => {},
+
   pickPath: (options) => open({ ...options, multiple: false }),
   openNewWindow: async () => {
     await invoke("open_new_window");

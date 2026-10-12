@@ -1,4 +1,4 @@
-import { invoke } from "@/lib/transport";
+import { invoke } from "@/lib/platform";
 
 export async function getPixiVersion(): Promise<string> {
   return invoke<string>("pixi_version");
