@@ -8,6 +8,7 @@ pub mod editor;
 pub mod error;
 pub mod event;
 pub mod fs;
+pub mod notification;
 pub mod pixi;
 pub mod pty;
 pub mod router;

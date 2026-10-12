@@ -27,7 +27,7 @@ import { subscribe } from "@/lib/event";
 import { addCondaDeps } from "@/lib/pixi/workspace/add";
 import { LockFileUsage } from "@/lib/pixi/workspace/reinstall";
 import type { Task } from "@/lib/pixi/workspace/task";
-import { type PtyExitEvent, type PtyStartEvent, listPtys } from "@/lib/pty";
+import { listPtys } from "@/lib/pty";
 
 interface EnvironmentProps {
   name: string;
@@ -100,7 +100,7 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
 
     void loadRunningCommands();
 
-    const unsubscribeStart = subscribe<PtyStartEvent>("pty-start", (event) => {
+    const unsubscribeStart = subscribe("pty-start", (event) => {
       const { kind } = event.invocation;
       if (kind.kind === "command" && kind.environment === name) {
         setRunningCommands((prev) =>
@@ -112,7 +112,7 @@ export function Environment({ name, tasks, filter }: EnvironmentProps) {
       }
     });
 
-    const unsubscribeExit = subscribe<PtyExitEvent>("pty-exit", (event) => {
+    const unsubscribeExit = subscribe("pty-exit", (event) => {
       if (event.invocation.kind.kind === "command") {
         setRunningCommands((prev) => {
           const next = new Map(prev);

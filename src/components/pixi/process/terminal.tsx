@@ -5,12 +5,7 @@ import { useEffect, useRef } from "react";
 import { useXTerm } from "react-xtermjs";
 
 import { subscribe } from "@/lib/event";
-import {
-  type PtyDataEvent,
-  getPtyBuffer,
-  resizePty,
-  writePty,
-} from "@/lib/pty";
+import { getPtyBuffer, resizePty, writePty } from "@/lib/pty";
 import { openExternal } from "@/lib/utils";
 
 interface TerminalProps {
@@ -76,7 +71,7 @@ export function Terminal({ id, isRunning, onDimensionsChange }: TerminalProps) {
       });
 
     // Reset terminal when a new PTY session starts
-    const unsubscribeStart = subscribe<{ id: string }>("pty-start", (event) => {
+    const unsubscribeStart = subscribe("pty-start", (event) => {
       if (id !== event.id) return;
       instance.reset();
       bufferLoadedRef.current = true;
@@ -84,7 +79,7 @@ export function Terminal({ id, isRunning, onDimensionsChange }: TerminalProps) {
     });
 
     // PTY Data -> Terminal
-    const unsubscribeData = subscribe<PtyDataEvent>("pty-data", (event) => {
+    const unsubscribeData = subscribe("pty-data", (event) => {
       if (id !== event.id) return;
       if (!bufferLoadedRef.current) {
         pendingDataRef.current.push(event.data);

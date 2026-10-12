@@ -9,7 +9,7 @@ use tokio::sync::mpsc;
 
 use crate::context::{Ctx, SessionId};
 use crate::error::Error;
-use crate::event::Event;
+use crate::event::{Event, EventPayload};
 
 #[derive(Default)]
 pub struct Watcher {
@@ -45,11 +45,8 @@ impl Watcher {
 
                     if manifest_modified {
                         debug!("Manifest changed: {:?}", manifest_path_clone);
-                        let _ = sender.send(Event::new(
-                            &session_clone,
-                            "manifest-changed",
-                            serde_json::Value::Null,
-                        ));
+                        let _ =
+                            sender.send(Event::new(&session_clone, EventPayload::ManifestChanged));
                     }
                 }
                 Err(errs) => {

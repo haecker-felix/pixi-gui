@@ -83,7 +83,7 @@ pub fn run(workspace_path: Option<String>) {
         let app_handle = app.handle().clone();
         tauri::async_runtime::spawn(async move {
             while let Some(event) = event_receiver.recv().await {
-                if let Err(e) = app_handle.emit_to(&event.session, &event.name, event.payload) {
+                if let Err(e) = app_handle.emit_to(&event.session, event.name, event.payload) {
                     log::error!("Failed to emit {} to {}: {e}", event.name, event.session);
                 }
             }

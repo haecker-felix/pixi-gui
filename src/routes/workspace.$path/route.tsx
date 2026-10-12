@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { showConfirm, showMessage } from "@/components/common/genericDialog";
 
 import { subscribe } from "@/lib/event";
-import type { PixiNotification } from "@/lib/pixi/notification";
 import { type Task, listTask } from "@/lib/pixi/workspace/task";
 import {
   type Environment,
@@ -25,7 +24,7 @@ import {
   listPlatforms,
 } from "@/lib/pixi/workspace/workspace";
 import { platform } from "@/lib/platform";
-import { type PtyExitEvent, killPty, listPtys } from "@/lib/pty";
+import { killPty, listPtys } from "@/lib/pty";
 import { addRecentWorkspace } from "@/lib/recentWorkspaces";
 import { unwatchManifest, watchManifest } from "@/lib/watcher";
 
@@ -105,25 +104,22 @@ function WorkspaceLayout() {
 
   // Listen for messages from pixi-api
   useEffect(() => {
-    const unsubscribe = subscribe<PixiNotification>(
-      "pixi-api-notification",
-      (notification) => {
-        switch (notification.level) {
-          case "error":
-            toast.error(notification.message);
-            break;
-          case "warning":
-            toast.warning(notification.message);
-            break;
-          case "success":
-            toast.success(notification.message);
-            break;
-          default:
-            toast.info(notification.message);
-            break;
-        }
-      },
-    );
+    const unsubscribe = subscribe("notification", (notification) => {
+      switch (notification.level) {
+        case "error":
+          toast.error(notification.message);
+          break;
+        case "warning":
+          toast.warning(notification.message);
+          break;
+        case "success":
+          toast.success(notification.message);
+          break;
+        default:
+          toast.info(notification.message);
+          break;
+      }
+    });
 
     return () => {
       unsubscribe();
@@ -132,7 +128,7 @@ function WorkspaceLayout() {
 
   // Receive pty/task events
   useEffect(() => {
-    const unsubscribe = subscribe<PtyExitEvent>("pty-exit", (payload) => {
+    const unsubscribe = subscribe("pty-exit", (payload) => {
       if (payload.invocation.kind.kind !== "task") {
         return;
       }

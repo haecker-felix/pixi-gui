@@ -10,6 +10,15 @@ export interface Editor {
   isGui: boolean;
 }
 
+export interface OpenEditorError {
+  workspace: string;
+  command: string;
+  environment: string;
+  exitCode: number | null;
+  signal: string | null;
+  stderr: string[];
+}
+
 export async function listAvailableEditors(
   workspace: string,
   environment: string,

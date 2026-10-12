@@ -13,7 +13,7 @@ use tokio::time::timeout;
 
 use pixi_gui_server_macros::command;
 
-use crate::{context::Ctx, error::Error};
+use crate::{context::Ctx, error::Error, event::EventPayload};
 
 /// How the PTY process was terminated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -411,13 +411,10 @@ pub async fn pty_create(
 
     state.add_pty(&ctx.session, pty.clone()).await;
 
-    ctx.send_event(
-        "pty-start",
-        PtyStartEvent {
-            id: id.clone(),
-            invocation: invocation.clone(),
-        },
-    );
+    ctx.send_event(EventPayload::PtyStart(PtyStartEvent {
+        id: id.clone(),
+        invocation: invocation.clone(),
+    }));
 
     // Channel for the reader thread to signal it has finished reading all data.
     let (reader_done_tx, reader_done_rx) = std::sync::mpsc::channel::<()>();
@@ -441,7 +438,7 @@ pub async fn pty_create(
                 id: id_reader.clone(),
                 data,
             };
-            ctx_reader.send_event("pty-data", data_event);
+            ctx_reader.send_event(EventPayload::PtyData(data_event));
         }
         let _ = reader_done_tx.send(());
     });
@@ -481,7 +478,7 @@ pub async fn pty_create(
             id: id.clone(),
             data: terminated_msg,
         };
-        ctx.send_event("pty-data", data_event);
+        ctx.send_event(EventPayload::PtyData(data_event));
 
         let exit_event = PtyExitEvent {
             id: id_clone.clone(),
@@ -498,7 +495,7 @@ pub async fn pty_create(
                 .await;
         });
 
-        ctx.send_event("pty-exit", &exit_event);
+        ctx.send_event(EventPayload::PtyExit(exit_event));
 
         // Signal that the process has fully exited and cleanup is complete.
         let _ = exit_tx.send(true);
