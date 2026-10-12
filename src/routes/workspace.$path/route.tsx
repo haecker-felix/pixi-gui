@@ -209,6 +209,8 @@ function WorkspaceLayout() {
         return !(await closeWorkspace());
       return false;
     },
+    // Closing the window is handled by `platform.onCloseRequested`,
+    enableBeforeUnload: false,
   });
 
   return <Outlet />;

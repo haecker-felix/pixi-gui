@@ -13,7 +13,11 @@ use tokio::time::timeout;
 
 use pixi_gui_server_macros::command;
 
-use crate::{context::Ctx, error::Error, state::State};
+use crate::{
+    context::{Ctx, SessionId},
+    error::Error,
+    state::State,
+};
 
 /// How the PTY process was terminated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -154,6 +158,8 @@ pub struct PtyHandle {
     pub id: String,
     pub invocation: PtyInvocation,
     #[serde(skip)]
+    pub session: SessionId,
+    #[serde(skip)]
     process_id: Option<u32>,
     #[serde(skip)]
     exit_tx: std::sync::Mutex<Option<watch::Sender<bool>>>,
@@ -229,6 +235,7 @@ impl PtyHandle {
 
     pub fn new(
         id: String,
+        session: SessionId,
         invocation: PtyInvocation,
         cols: u16,
         rows: u16,
@@ -272,6 +279,7 @@ impl PtyHandle {
             Self {
                 id,
                 invocation,
+                session,
                 process_id,
                 exit_tx: std::sync::Mutex::new(Some(exit_tx)),
                 exit_rx,
@@ -405,7 +413,13 @@ pub async fn pty_create(
     let id_clone = id.clone();
     let runtime = tokio::runtime::Handle::current();
 
-    let (handle, child) = PtyHandle::new(id.clone(), invocation.clone(), cols, rows)?;
+    let (handle, child) = PtyHandle::new(
+        id.clone(),
+        ctx.session.clone(),
+        invocation.clone(),
+        cols,
+        rows,
+    )?;
     let exit_tx = handle.exit_tx.lock().unwrap().take().unwrap();
     let pty = Arc::new(handle);
 
@@ -493,7 +507,7 @@ pub async fn pty_create(
         };
 
         runtime.block_on(async {
-            state.remove_pty(&id_clone, exit_event.clone()).await;
+            state.remove_pty(&pty, exit_event.clone()).await;
         });
 
         ctx.send_event("pty-exit", &exit_event);

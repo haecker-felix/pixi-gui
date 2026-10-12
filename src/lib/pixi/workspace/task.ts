@@ -1,4 +1,4 @@
-import { invoke } from "@/lib/api/transport";
+import { invoke } from "@/lib/transport";
 
 export type CommandArguments = { Single: string } | { Multiple: string[] };
 

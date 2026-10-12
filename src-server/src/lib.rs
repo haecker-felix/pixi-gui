@@ -11,6 +11,8 @@ pub mod fs;
 pub mod pixi;
 pub mod pty;
 pub mod router;
+#[cfg(feature = "server")]
+pub mod server;
 pub mod settings;
 pub mod state;
 pub mod utils;

@@ -4,6 +4,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
+import { ConnectionBanner } from "@/components/common/connectionBanner";
 import { showConfirm } from "@/components/common/genericDialog";
 
 import { type ConfirmRequest, answerConfirm } from "@/lib/confirm";
@@ -80,6 +81,7 @@ function RootComponent() {
 
   return (
     <>
+      <ConnectionBanner />
       <Outlet />
       {import.meta.env.DEV && (
         <TanStackDevtools

@@ -1,4 +1,4 @@
-import { invoke } from "@/lib/api/transport";
+import { invoke } from "@/lib/transport";
 
 // Filesystem of the machine the backend runs on
 

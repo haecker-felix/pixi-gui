@@ -1,7 +1,10 @@
+use serde::Serialize;
+
 use crate::context::SessionId;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Event {
+    #[serde(skip_serializing)]
     pub session: SessionId,
     pub name: String,
     pub payload: serde_json::Value,

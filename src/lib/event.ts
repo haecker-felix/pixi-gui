@@ -1,4 +1,4 @@
-import { listen } from "@/lib/api/transport";
+import { listen } from "@/lib/transport";
 
 type EventHandler<T = unknown> = (payload: T) => void;
 

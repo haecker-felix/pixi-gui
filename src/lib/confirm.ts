@@ -1,4 +1,4 @@
-import { invoke } from "@/lib/api/transport";
+import { invoke } from "@/lib/transport";
 
 /** Payload of the `confirm-request` event, sent when pixi asks the user a question. */
 export interface ConfirmRequest {

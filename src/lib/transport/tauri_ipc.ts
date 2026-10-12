@@ -1,7 +1,7 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 
-// The only place that knows how the frontend talks to the backend.
+// Talks to the backend over Tauri IPC
 
 export function invoke<T>(
   cmd: string,

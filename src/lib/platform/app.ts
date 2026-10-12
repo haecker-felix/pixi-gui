@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import { documentDir, homeDir, join } from "@tauri-apps/api/path";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
@@ -7,16 +6,11 @@ import {
   requestPermission,
   sendNotification,
 } from "@tauri-apps/plugin-notification";
-import { LazyStore } from "@tauri-apps/plugin-store";
 
 import type { Platform } from "@/lib/platform/index";
 
-export const tauriPlatform: Platform = {
+export const appPlatform: Platform = {
   pickPath: (options) => open({ ...options, multiple: false }),
-  homeDir,
-  documentDir,
-  joinPath: (...paths) => join(...paths),
-  createStore: (name) => new LazyStore(name),
   openNewWindow: async () => {
     await invoke("open_new_window");
   },
@@ -46,6 +40,4 @@ export const tauriPlatform: Platform = {
         event.preventDefault();
       }
     }),
-
-  supportsEditors: true,
 };

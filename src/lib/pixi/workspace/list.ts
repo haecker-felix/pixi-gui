@@ -1,5 +1,5 @@
-import { invoke } from "@/lib/api/transport";
 import type { LockFileUsage } from "@/lib/pixi/workspace/reinstall";
+import { invoke } from "@/lib/transport";
 
 export type PackageKind = "conda" | "pypi";
 

@@ -1,4 +1,4 @@
-import { invoke } from "@/lib/api/transport";
+import { invoke } from "@/lib/transport";
 
 export async function watchManifest(manifestPath: string): Promise<void> {
   await invoke("watch_manifest", { manifestPath });

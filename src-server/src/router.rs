@@ -8,6 +8,7 @@ use crate::confirm;
 use crate::context::Ctx;
 use crate::editor;
 use crate::error::Error;
+use crate::fs;
 use crate::pixi;
 use crate::pixi::workspace::add;
 use crate::pixi::workspace::init;
@@ -18,6 +19,7 @@ use crate::pixi::workspace::search;
 use crate::pixi::workspace::task;
 use crate::pixi::workspace::workspace;
 use crate::pty;
+use crate::settings;
 use crate::utils;
 use crate::watcher;
 
@@ -107,6 +109,11 @@ pub async fn dispatch(ctx: Ctx, cmd: &str, args: Value) -> Result<Value, Dispatc
             editor::list_installable_editors,
             editor::open_editor,
             confirm::answer_confirm,
+            settings::settings_get,
+            settings::settings_set,
+            fs::fs_home_dir,
+            fs::fs_documents_dir,
+            fs::fs_join,
         ]
     )
 }
