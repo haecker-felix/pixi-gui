@@ -102,6 +102,9 @@ pub fn run(workspace_path: Option<String>) {
     .build(tauri::generate_context!())
     .expect("Error while running Tauri application")
     .run(|app, event| {
+        #[cfg(not(target_os = "macos"))]
+        let _ = (app, event);
+
         // On macOS, file associations reuse the existing process and send `RunEvent::Opened` events
         #[cfg(target_os = "macos")]
         match event {
