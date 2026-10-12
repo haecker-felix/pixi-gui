@@ -75,7 +75,7 @@ impl Watcher {
         Ok(())
     }
 
-    pub fn unwatch(&mut self, session: &str) {
+    pub fn unwatch(&mut self, session: &SessionId) {
         if self.watchers.remove(session).is_some() {
             debug!("Stopped watcher for session {}", session);
         }

@@ -13,11 +13,7 @@ use tokio::time::timeout;
 
 use pixi_gui_server_macros::command;
 
-use crate::{
-    context::{Ctx, SessionId},
-    error::Error,
-    state::State,
-};
+use crate::{context::Ctx, error::Error};
 
 /// How the PTY process was terminated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -158,8 +154,6 @@ pub struct PtyHandle {
     pub id: String,
     pub invocation: PtyInvocation,
     #[serde(skip)]
-    pub session: SessionId,
-    #[serde(skip)]
     process_id: Option<u32>,
     #[serde(skip)]
     exit_tx: std::sync::Mutex<Option<watch::Sender<bool>>>,
@@ -235,7 +229,6 @@ impl PtyHandle {
 
     pub fn new(
         id: String,
-        session: SessionId,
         invocation: PtyInvocation,
         cols: u16,
         rows: u16,
@@ -279,7 +272,6 @@ impl PtyHandle {
             Self {
                 id,
                 invocation,
-                session,
                 process_id,
                 exit_tx: std::sync::Mutex::new(Some(exit_tx)),
                 exit_rx,
@@ -413,17 +405,11 @@ pub async fn pty_create(
     let id_clone = id.clone();
     let runtime = tokio::runtime::Handle::current();
 
-    let (handle, child) = PtyHandle::new(
-        id.clone(),
-        ctx.session.clone(),
-        invocation.clone(),
-        cols,
-        rows,
-    )?;
+    let (handle, child) = PtyHandle::new(id.clone(), invocation.clone(), cols, rows)?;
     let exit_tx = handle.exit_tx.lock().unwrap().take().unwrap();
     let pty = Arc::new(handle);
 
-    state.add_pty(id.clone(), pty.clone()).await;
+    state.add_pty(&ctx.session, pty.clone()).await;
 
     ctx.send_event(
         "pty-start",
@@ -507,7 +493,9 @@ pub async fn pty_create(
         };
 
         runtime.block_on(async {
-            state.remove_pty(&pty, exit_event.clone()).await;
+            state
+                .remove_pty(&ctx.session, &id_clone, exit_event.clone())
+                .await;
         });
 
         ctx.send_event("pty-exit", &exit_event);
@@ -521,26 +509,26 @@ pub async fn pty_create(
 
 #[command]
 pub async fn pty_write(ctx: Ctx, id: String, data: String) -> Result<(), Error> {
-    let pty = require_pty(&ctx.state, &id).await?;
+    let pty = require_pty(&ctx, &id).await?;
     pty.write(data).await?;
     Ok(())
 }
 
 #[command]
 pub async fn pty_resize(ctx: Ctx, id: String, cols: u16, rows: u16) -> Result<(), Error> {
-    let pty = require_pty(&ctx.state, &id).await?;
+    let pty = require_pty(&ctx, &id).await?;
     pty.resize(cols, rows).await?;
     Ok(())
 }
 
 #[command]
 pub async fn pty_get_buffer(ctx: Ctx, id: String) -> Result<String, Error> {
-    if let Some(pty) = ctx.state.pty(&id).await {
+    if let Some(pty) = ctx.state.pty(&ctx.session, &id).await {
         return Ok(pty.buffered_output()?);
     }
 
     // PTY doesn't exist anymore -> return saved buffer
-    if let Some(record) = ctx.state.exit_event(&id).await {
+    if let Some(record) = ctx.state.exit_event(&ctx.session, &id).await {
         return Ok(record.buffer);
     }
 
@@ -549,21 +537,21 @@ pub async fn pty_get_buffer(ctx: Ctx, id: String) -> Result<String, Error> {
 
 #[command]
 pub async fn pty_kill(ctx: Ctx, id: String) -> Result<(), Error> {
-    let pty = require_pty(&ctx.state, &id).await?;
+    let pty = require_pty(&ctx, &id).await?;
     pty.kill().await?;
     Ok(())
 }
 
-async fn require_pty(state: &State, id: &str) -> Result<Arc<PtyHandle>, Error> {
-    state
-        .pty(id)
+async fn require_pty(ctx: &Ctx, id: &str) -> Result<Arc<PtyHandle>, Error> {
+    ctx.state
+        .pty(&ctx.session, id)
         .await
         .ok_or_else(|| Error::from(miette::miette!("PTY `{id}` not found")))
 }
 
 #[command]
 pub async fn pty_is_running(ctx: Ctx, id: String) -> Result<bool, Error> {
-    let Some(pty) = ctx.state.pty(&id).await else {
+    let Some(pty) = ctx.state.pty(&ctx.session, &id).await else {
         return Ok(false);
     };
     Ok(pty.is_running())
@@ -571,5 +559,5 @@ pub async fn pty_is_running(ctx: Ctx, id: String) -> Result<bool, Error> {
 
 #[command]
 pub async fn pty_list(ctx: Ctx) -> Result<Vec<Arc<PtyHandle>>, Error> {
-    Ok(ctx.state.ptys().await)
+    Ok(ctx.state.ptys(&ctx.session).await)
 }

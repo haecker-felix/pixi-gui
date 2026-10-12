@@ -10,22 +10,25 @@ use crate::event::Event;
 use crate::pty::{PtyExitEvent, PtyHandle};
 use crate::watcher::Watcher;
 
-/// A confirm that waits for the user's answer.
-struct PendingConfirm {
-    session: SessionId,
-    sender: oneshot::Sender<bool>,
-}
+/// Values that every session has its own set of
+type PerSession<K, V> = HashMap<SessionId, HashMap<K, V>>;
 
 /// Everything the backend keeps in memory
 #[derive(Clone)]
 pub struct State {
+    /// Events for the frontend, which the transport delivers to their session
     event_sender: mpsc::UnboundedSender<Event>,
-    ptys: Arc<Mutex<HashMap<String, Arc<PtyHandle>>>>,
-    exited_ptys: Arc<Mutex<HashMap<String, PtyExitEvent>>>,
-    watcher: Arc<Mutex<Watcher>>,
 
-    confirms: Arc<SyncMutex<HashMap<u64, PendingConfirm>>>,
+    /// The running processes of each session, by PTY id
+    ptys: Arc<Mutex<PerSession<String, Arc<PtyHandle>>>>,
+    /// The exit events of the last finished runs of each session, by PTY id
+    exited_ptys: Arc<Mutex<PerSession<String, PtyExitEvent>>>,
+    /// The confirms of each session that wait for the user's answer, by confirm id
+    confirms: Arc<SyncMutex<PerSession<u64, oneshot::Sender<bool>>>>,
     next_confirm_id: Arc<AtomicU64>,
+
+    /// The manifest file watchers, one per session
+    watcher: Arc<Mutex<Watcher>>,
 }
 
 impl State {
@@ -47,74 +50,92 @@ impl State {
         &self.event_sender
     }
 
-    pub async fn pty(&self, id: &str) -> Option<Arc<PtyHandle>> {
-        self.ptys.lock().await.get(id).cloned()
+    pub async fn pty(&self, session: &SessionId, id: &str) -> Option<Arc<PtyHandle>> {
+        self.ptys.lock().await.get(session)?.get(id).cloned()
     }
 
-    pub async fn ptys(&self) -> Vec<Arc<PtyHandle>> {
-        self.ptys.lock().await.values().cloned().collect()
+    pub async fn ptys(&self, session: &SessionId) -> Vec<Arc<PtyHandle>> {
+        match self.ptys.lock().await.get(session) {
+            Some(ptys) => ptys.values().cloned().collect(),
+            None => Vec::new(),
+        }
     }
 
-    pub async fn add_pty(&self, id: String, pty: Arc<PtyHandle>) {
+    pub async fn add_pty(&self, session: &SessionId, pty: Arc<PtyHandle>) {
         let mut ptys = self.ptys.lock().await;
-        if ptys.contains_key(&id) {
-            warn!("A PTY with that id is already registered: {id} ");
+        let ptys = ptys.entry(session.clone()).or_default();
+
+        if ptys.contains_key(&pty.id) {
+            warn!("A PTY with that id is already registered: {} ", pty.id);
             return;
         }
-        ptys.insert(id.clone(), pty);
+        ptys.insert(pty.id.clone(), pty.clone());
 
         // Clear any saved exit event from a previous run
-        self.exited_ptys.lock().await.remove(&id);
+        if let Some(exited_ptys) = self.exited_ptys.lock().await.get_mut(session) {
+            exited_ptys.remove(&pty.id);
+        }
     }
 
-    pub async fn remove_pty(&self, id: &str, exit_event: PtyExitEvent) -> Option<Arc<PtyHandle>> {
+    pub async fn remove_pty(&self, session: &SessionId, id: &str, exit_event: PtyExitEvent) {
+        let mut ptys = self.ptys.lock().await;
+        let Some(ptys) = ptys.get_mut(session) else {
+            return;
+        };
+        ptys.remove(id);
+
         // Save last buffer so it can be retrieved again
         // afterwards even if the PTY itself no longer exists
         self.exited_ptys
             .lock()
             .await
+            .entry(session.clone())
+            .or_default()
             .insert(id.to_string(), exit_event);
-
-        self.ptys.lock().await.remove(id)
     }
 
-    pub async fn exit_event(&self, id: &str) -> Option<PtyExitEvent> {
-        self.exited_ptys.lock().await.get(id).cloned()
+    pub async fn exit_event(&self, session: &SessionId, id: &str) -> Option<PtyExitEvent> {
+        self.exited_ptys.lock().await.get(session)?.get(id).cloned()
     }
 
     pub fn watcher(&self) -> &Arc<Mutex<Watcher>> {
         &self.watcher
     }
 
-    pub fn request_confirm(&self, session: &str) -> (u64, oneshot::Receiver<bool>) {
+    pub fn request_confirm(&self, session: &SessionId) -> (u64, oneshot::Receiver<bool>) {
         let id = self.next_confirm_id.fetch_add(1, Ordering::Relaxed);
         let (sender, receiver) = oneshot::channel();
 
-        let pending = PendingConfirm {
-            session: session.to_string(),
-            sender,
-        };
-        self.confirms.lock().unwrap().insert(id, pending);
+        self.confirms
+            .lock()
+            .unwrap()
+            .entry(session.clone())
+            .or_default()
+            .insert(id, sender);
 
         (id, receiver)
     }
 
-    pub fn answer_confirm(&self, session: &str, id: u64, value: bool) {
+    pub fn answer_confirm(&self, session: &SessionId, id: u64, value: bool) {
         let mut confirms = self.confirms.lock().unwrap();
-        if confirms.get(&id).is_some_and(|c| c.session == session)
-            && let Some(pending) = confirms.remove(&id)
+        if let Some(confirms) = confirms.get_mut(session)
+            && let Some(sender) = confirms.remove(&id)
         {
-            let _ = pending.sender.send(value);
+            let _ = sender.send(value);
         }
     }
 
     /// Cleans up after a session has ended (e.g. its window was closed)
-    pub async fn drop_session(&self, session: &str) {
+    pub async fn drop_session(&self, session: &SessionId) {
+        // Terminate running processes of the session
+        let ptys = self.ptys.lock().await.remove(session).unwrap_or_default();
+        for pty in ptys.into_values() {
+            tokio::spawn(async move { pty.kill().await });
+        }
+        self.exited_ptys.lock().await.remove(session);
+
         // Dropping the senders resolves the waiting commands with "no"
-        self.confirms
-            .lock()
-            .unwrap()
-            .retain(|_, pending| pending.session != session);
+        self.confirms.lock().unwrap().remove(session);
 
         // Stop watching the filesystem
         self.watcher.lock().await.unwatch(session);

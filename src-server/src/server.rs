@@ -158,7 +158,7 @@ impl Server {
     /// Runs a command in the background, so long commands don't block other commands
     fn spawn_command(
         &self,
-        session: &str,
+        session: &SessionId,
         sender: &mpsc::UnboundedSender<String>,
         message: FrontendMessage,
     ) {

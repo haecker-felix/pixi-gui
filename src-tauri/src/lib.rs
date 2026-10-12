@@ -5,7 +5,7 @@ pub mod window;
 use std::path::PathBuf;
 
 use clap::Parser;
-use pixi_gui_server::State;
+use pixi_gui_server::{SessionId, State};
 use tauri::{Emitter, Manager, WindowEvent};
 
 #[derive(Parser)]
@@ -68,10 +68,10 @@ pub fn run(workspace_path: Option<String>) {
     .plugin(tauri_plugin_notification::init())
     .invoke_handler(tauri::generate_handler![api::api, window::open_new_window,])
     .on_window_event(|window, event| {
-        // Answer open confirm questions with "no" and stop watchers of closed windows
+        // Clean up what closed windows left behind: processes, watchers, open confirm questions
         if let WindowEvent::Destroyed = event {
             let state = window.state::<State>().inner().clone();
-            let session = window.label().to_string();
+            let session: SessionId = window.label().to_string();
             tauri::async_runtime::spawn(async move { state.drop_session(&session).await });
         }
     })

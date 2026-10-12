@@ -11,9 +11,9 @@ pub struct Event {
 }
 
 impl Event {
-    pub fn new(session: &str, name: &str, payload: serde_json::Value) -> Self {
+    pub fn new(session: &SessionId, name: &str, payload: serde_json::Value) -> Self {
         Self {
-            session: session.to_string(),
+            session: session.clone(),
             name: name.to_string(),
             payload,
         }
