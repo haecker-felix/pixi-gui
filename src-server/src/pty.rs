@@ -13,7 +13,7 @@ use tokio::time::timeout;
 
 use pixi_gui_server_macros::command;
 
-use crate::{context::Ctx, error::Error, event::EventPayload};
+use crate::{error::Error, event::EventPayload, session::Session};
 
 /// How the PTY process was terminated.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -395,23 +395,29 @@ impl PtyHandle {
 
 #[command]
 pub async fn pty_create(
-    ctx: Ctx,
+    session: Session,
     id: String,
     invocation: PtyInvocation,
     cols: u16,
     rows: u16,
 ) -> Result<(), Error> {
-    let state = ctx.state.clone();
     let id_clone = id.clone();
     let runtime = tokio::runtime::Handle::current();
 
-    let (handle, child) = PtyHandle::new(id.clone(), invocation.clone(), cols, rows)?;
+    let (handle, mut child) = PtyHandle::new(id.clone(), invocation.clone(), cols, rows)?;
     let exit_tx = handle.exit_tx.lock().unwrap().take().unwrap();
     let pty = Arc::new(handle);
 
-    state.add_pty(&ctx.session, pty.clone()).await;
+    if let Err(err) = session.add_pty(pty.clone()).await {
+        // Nothing keeps track of the process, so it can't keep running
+        tokio::task::spawn_blocking(move || {
+            let _ = child.kill();
+            let _ = child.wait();
+        });
+        return Err(err.into());
+    }
 
-    ctx.send_event(EventPayload::PtyStart(PtyStartEvent {
+    session.send_event(EventPayload::PtyStart(PtyStartEvent {
         id: id.clone(),
         invocation: invocation.clone(),
     }));
@@ -421,7 +427,7 @@ pub async fn pty_create(
 
     // Reader thread: reads PTY output and emits pty-data events.
     let pty_reader = pty.clone();
-    let ctx_reader = ctx.clone();
+    let session_reader = session.clone();
     let id_reader = id.clone();
     tokio::task::spawn_blocking(move || {
         while let Some(data) = {
@@ -438,7 +444,7 @@ pub async fn pty_create(
                 id: id_reader.clone(),
                 data,
             };
-            ctx_reader.send_event(EventPayload::PtyData(data_event));
+            session_reader.send_event(EventPayload::PtyData(data_event));
         }
         let _ = reader_done_tx.send(());
     });
@@ -478,7 +484,7 @@ pub async fn pty_create(
             id: id.clone(),
             data: terminated_msg,
         };
-        ctx.send_event(EventPayload::PtyData(data_event));
+        session.send_event(EventPayload::PtyData(data_event));
 
         let exit_event = PtyExitEvent {
             id: id_clone.clone(),
@@ -490,12 +496,10 @@ pub async fn pty_create(
         };
 
         runtime.block_on(async {
-            state
-                .remove_pty(&ctx.session, &id_clone, exit_event.clone())
-                .await;
+            session.remove_pty(&id_clone, exit_event.clone()).await;
         });
 
-        ctx.send_event(EventPayload::PtyExit(exit_event));
+        session.send_event(EventPayload::PtyExit(exit_event));
 
         // Signal that the process has fully exited and cleanup is complete.
         let _ = exit_tx.send(true);
@@ -505,27 +509,27 @@ pub async fn pty_create(
 }
 
 #[command]
-pub async fn pty_write(ctx: Ctx, id: String, data: String) -> Result<(), Error> {
-    let pty = require_pty(&ctx, &id).await?;
+pub async fn pty_write(session: Session, id: String, data: String) -> Result<(), Error> {
+    let pty = require_pty(&session, &id).await?;
     pty.write(data).await?;
     Ok(())
 }
 
 #[command]
-pub async fn pty_resize(ctx: Ctx, id: String, cols: u16, rows: u16) -> Result<(), Error> {
-    let pty = require_pty(&ctx, &id).await?;
+pub async fn pty_resize(session: Session, id: String, cols: u16, rows: u16) -> Result<(), Error> {
+    let pty = require_pty(&session, &id).await?;
     pty.resize(cols, rows).await?;
     Ok(())
 }
 
 #[command]
-pub async fn pty_get_buffer(ctx: Ctx, id: String) -> Result<String, Error> {
-    if let Some(pty) = ctx.state.pty(&ctx.session, &id).await {
+pub async fn pty_get_buffer(session: Session, id: String) -> Result<String, Error> {
+    if let Some(pty) = session.pty(&id).await {
         return Ok(pty.buffered_output()?);
     }
 
     // PTY doesn't exist anymore -> return saved buffer
-    if let Some(record) = ctx.state.exit_event(&ctx.session, &id).await {
+    if let Some(record) = session.exit_event(&id).await {
         return Ok(record.buffer);
     }
 
@@ -533,28 +537,28 @@ pub async fn pty_get_buffer(ctx: Ctx, id: String) -> Result<String, Error> {
 }
 
 #[command]
-pub async fn pty_kill(ctx: Ctx, id: String) -> Result<(), Error> {
-    let pty = require_pty(&ctx, &id).await?;
+pub async fn pty_kill(session: Session, id: String) -> Result<(), Error> {
+    let pty = require_pty(&session, &id).await?;
     pty.kill().await?;
     Ok(())
 }
 
-async fn require_pty(ctx: &Ctx, id: &str) -> Result<Arc<PtyHandle>, Error> {
-    ctx.state
-        .pty(&ctx.session, id)
+async fn require_pty(session: &Session, id: &str) -> Result<Arc<PtyHandle>, Error> {
+    session
+        .pty(id)
         .await
         .ok_or_else(|| Error::from(miette::miette!("PTY `{id}` not found")))
 }
 
 #[command]
-pub async fn pty_is_running(ctx: Ctx, id: String) -> Result<bool, Error> {
-    let Some(pty) = ctx.state.pty(&ctx.session, &id).await else {
+pub async fn pty_is_running(session: Session, id: String) -> Result<bool, Error> {
+    let Some(pty) = session.pty(&id).await else {
         return Ok(false);
     };
     Ok(pty.is_running())
 }
 
 #[command]
-pub async fn pty_list(ctx: Ctx) -> Result<Vec<Arc<PtyHandle>>, Error> {
-    Ok(ctx.state.ptys(&ctx.session).await)
+pub async fn pty_list(session: Session) -> Result<Vec<Arc<PtyHandle>>, Error> {
+    Ok(session.ptys().await)
 }

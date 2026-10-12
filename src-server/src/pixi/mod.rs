@@ -1,11 +1,11 @@
 use pixi_gui_server_macros::command;
 
-use crate::context::Ctx;
+use crate::session::Session;
 
 pub mod workspace;
 
 #[command]
-pub async fn pixi_version(ctx: Ctx) -> String {
+pub async fn pixi_version(session: Session) -> String {
     pixi_api::PIXI_VERSION.to_string()
 }
 #[command]

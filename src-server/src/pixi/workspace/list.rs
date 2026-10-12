@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::context::Ctx;
+use crate::session::Session;
 use crate::{
     error::Error,
     utils::{self, spawn_local},
@@ -14,7 +14,7 @@ use pixi_gui_server_macros::command;
 #[command]
 #[allow(clippy::too_many_arguments)]
 pub async fn list_packages(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     regex: Option<String>,
     platform: Option<String>,
@@ -30,7 +30,7 @@ pub async fn list_packages(
             .unwrap()
             .map(PixiPlatformName::from);
 
-        let packages = utils::workspace_context(ctx, workspace)?
+        let packages = utils::workspace_context(session, workspace)?
             .list_packages(
                 regex,
                 platform,

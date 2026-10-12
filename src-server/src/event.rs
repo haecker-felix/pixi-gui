@@ -2,10 +2,10 @@ use serde::Serialize;
 use strum::IntoStaticStr;
 
 use crate::confirm::ConfirmRequest;
-use crate::context::SessionId;
 use crate::editor::OpenEditorError;
 use crate::notification::Notification;
 use crate::pty::{PtyDataEvent, PtyExitEvent, PtyStartEvent};
+use crate::session::SessionId;
 
 #[derive(Clone, Serialize)]
 pub struct Event {

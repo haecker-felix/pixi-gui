@@ -1,6 +1,6 @@
 use std::{collections::HashSet, path::PathBuf};
 
-use crate::context::Ctx;
+use crate::session::Session;
 use crate::{
     error::Error,
     utils::{self},
@@ -16,11 +16,11 @@ use pixi_gui_server_macros::command;
 
 #[command]
 pub async fn search_wildcard(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     package_name_filter: &str,
 ) -> Result<Option<Vec<RepoDataRecord>>, Error> {
-    let ctx = utils::workspace_context(ctx, workspace)?;
+    let ctx = utils::workspace_context(session, workspace)?;
 
     let channels = ctx
         .workspace()
@@ -64,11 +64,11 @@ pub async fn search_wildcard(
 
 #[command]
 pub async fn search_exact(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     match_spec: MatchSpec,
 ) -> Result<Option<Vec<RepoDataRecord>>, Error> {
-    let ctx = utils::workspace_context(ctx, workspace)?;
+    let ctx = utils::workspace_context(session, workspace)?;
 
     let channels = ctx
         .workspace()

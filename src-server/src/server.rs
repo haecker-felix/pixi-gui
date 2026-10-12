@@ -17,7 +17,7 @@ use tokio::sync::mpsc;
 use uuid::Uuid;
 
 use crate::event::Event;
-use crate::{Ctx, SessionId, State, dispatch};
+use crate::{SessionId, State, dispatch};
 
 /// Sent by the frontend
 #[derive(Deserialize)]
@@ -162,10 +162,10 @@ impl Server {
         sender: &mpsc::UnboundedSender<String>,
         message: FrontendMessage,
     ) {
-        let ctx = Ctx::new(self.state.clone(), session);
+        let session = self.state.session(session);
         let sender = sender.clone();
         tokio::spawn(async move {
-            let result = dispatch(ctx, &message.cmd, message.args)
+            let result = dispatch(session, &message.cmd, message.args)
                 .await
                 .map_err(|err| err.to_string());
             let response = ServerMessage::Response {

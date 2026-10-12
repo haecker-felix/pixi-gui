@@ -1,4 +1,4 @@
-use pixi_gui_server::{Ctx, State, dispatch};
+use pixi_gui_server::{State, dispatch};
 use serde_json::Value;
 
 /// Single entry point for all backend commands. The calling window is the session.
@@ -9,6 +9,8 @@ pub async fn api(
     cmd: String,
     args: Value,
 ) -> Result<Value, String> {
-    let ctx = Ctx::new(state.inner().clone(), window.label());
-    dispatch(ctx, &cmd, args).await.map_err(|e| e.to_string())
+    let session = state.session(window.label());
+    dispatch(session, &cmd, args)
+        .await
+        .map_err(|e| e.to_string())
 }

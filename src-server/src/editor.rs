@@ -16,7 +16,7 @@ use tokio::io::AsyncBufReadExt;
 use tokio::process::Command;
 use which::which;
 
-use crate::{context::Ctx, error::Error, event::EventPayload, pty::find_pixi_binary, utils};
+use crate::{error::Error, event::EventPayload, pty::find_pixi_binary, session::Session, utils};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -135,11 +135,11 @@ const INSTALLABLE_EDITORS: &[Editor] = &[
 /// List all available editors for an environment (system editors + installed tools)
 #[command]
 pub async fn list_available_editors(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     environment: EnvironmentName,
 ) -> Result<Vec<Editor>, Error> {
-    let ctx = utils::workspace_context(ctx, workspace)?;
+    let ctx = utils::workspace_context(session, workspace)?;
 
     let feature_names: Vec<_> = ctx
         .workspace()
@@ -188,12 +188,12 @@ pub async fn list_available_editors(
 /// List editors that can be installed in an environment (not yet installed)
 #[command]
 pub async fn list_installable_editors(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     environment: EnvironmentName,
 ) -> Result<Vec<Editor>, Error> {
     // Get all available editors (system + installed tools)
-    let available = list_available_editors(ctx, workspace, environment).await?;
+    let available = list_available_editors(session, workspace, environment).await?;
 
     // Return INSTALLABLE_EDITORS minus those already available
     let installable: Vec<Editor> = INSTALLABLE_EDITORS
@@ -261,7 +261,7 @@ impl Default for OutputBuffer {
 /// Open editor in the OS as a detached process
 #[command]
 pub async fn open_editor(
-    ctx: Ctx,
+    session: Session,
     root: String,
     manifest: String,
     environment: String,
@@ -355,7 +355,7 @@ pub async fn open_editor(
             signal,
             stderr: output_buffer.into_vec(),
         };
-        ctx.send_event(EventPayload::EditorFailed(payload));
+        session.send_event(EventPayload::EditorFailed(payload));
     });
 
     Ok(())

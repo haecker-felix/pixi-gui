@@ -5,7 +5,6 @@ use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
 
 use crate::confirm;
-use crate::context::Ctx;
 use crate::editor;
 use crate::error::Error;
 use crate::fs;
@@ -19,6 +18,7 @@ use crate::pixi::workspace::search;
 use crate::pixi::workspace::task;
 use crate::pixi::workspace::workspace;
 use crate::pty;
+use crate::session::Session;
 use crate::settings;
 use crate::utils;
 use crate::watcher;
@@ -51,9 +51,9 @@ impl fmt::Display for DispatchError {
 impl std::error::Error for DispatchError {}
 
 /// Runs the command `cmd` with the JSON object `args` (camelCase keys) and returns its JSON result.
-pub async fn dispatch(ctx: Ctx, cmd: &str, args: Value) -> Result<Value, DispatchError> {
+pub async fn dispatch(session: Session, cmd: &str, args: Value) -> Result<Value, DispatchError> {
     generate_handler!(
-        ctx,
+        session,
         cmd,
         args,
         [

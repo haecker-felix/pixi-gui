@@ -15,8 +15,8 @@ use pixi_api::workspace::ChannelOptions;
 use pixi_gui_server_macros::command;
 use serde::{Deserialize, Serialize};
 
-use crate::context::Ctx;
 use crate::error::Error;
+use crate::session::Session;
 use crate::utils::{self, spawn_local};
 
 #[derive(Serialize, Deserialize)]
@@ -28,25 +28,25 @@ pub struct Environment {
 }
 
 #[command]
-pub async fn root(ctx: Ctx, workspace: PathBuf) -> Result<PathBuf, Error> {
+pub async fn root(session: Session, workspace: PathBuf) -> Result<PathBuf, Error> {
     let workspace = utils::workspace(workspace)?;
     Ok(workspace.root().to_path_buf())
 }
 
 #[command]
-pub async fn manifest(ctx: Ctx, workspace: PathBuf) -> Result<PathBuf, Error> {
+pub async fn manifest(session: Session, workspace: PathBuf) -> Result<PathBuf, Error> {
     let workspace = utils::workspace(workspace)?;
     Ok(workspace.workspace.provenance.absolute_path())
 }
 
 #[command]
-pub async fn name(ctx: Ctx, workspace: PathBuf) -> Result<String, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?.name().await)
+pub async fn name(session: Session, workspace: PathBuf) -> Result<String, Error> {
+    Ok(utils::workspace_context(session, workspace)?.name().await)
 }
 
 #[command]
-pub async fn set_name(ctx: Ctx, workspace: PathBuf, name: String) -> Result<(), Error> {
-    utils::workspace_context(ctx, workspace)?
+pub async fn set_name(session: Session, workspace: PathBuf, name: String) -> Result<(), Error> {
+    utils::workspace_context(session, workspace)?
         .set_name(&name)
         .await?;
 
@@ -54,19 +54,19 @@ pub async fn set_name(ctx: Ctx, workspace: PathBuf, name: String) -> Result<(), 
 }
 
 #[command]
-pub async fn description(ctx: Ctx, workspace: PathBuf) -> Result<Option<String>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+pub async fn description(session: Session, workspace: PathBuf) -> Result<Option<String>, Error> {
+    Ok(utils::workspace_context(session, workspace)?
         .description()
         .await)
 }
 
 #[command]
 pub async fn set_description(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     description: String,
 ) -> Result<(), Error> {
-    utils::workspace_context(ctx, workspace)?
+    utils::workspace_context(session, workspace)?
         .set_description(&description)
         .await?;
 
@@ -75,24 +75,24 @@ pub async fn set_description(
 
 #[command]
 pub async fn list_channels(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
 ) -> Result<HashMap<EnvironmentName, Vec<NamedChannelOrUrl>>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+    Ok(utils::workspace_context(session, workspace)?
         .list_channel()
         .await)
 }
 
 #[command]
 pub async fn add_channel(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     options: ChannelOptions,
     priority: Option<i32>,
     prepend: bool,
 ) -> Result<(), Error> {
     spawn_local(move || async move {
-        utils::workspace_context(ctx, workspace)?
+        utils::workspace_context(session, workspace)?
             .add_channel(options, priority, prepend)
             .await?;
 
@@ -103,13 +103,13 @@ pub async fn add_channel(
 
 #[command]
 pub async fn remove_channel(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     options: ChannelOptions,
     priority: Option<i32>,
 ) -> Result<(), Error> {
     spawn_local(move || async move {
-        utils::workspace_context(ctx, workspace)?
+        utils::workspace_context(session, workspace)?
             .remove_channel(options, priority)
             .await?;
 
@@ -120,12 +120,12 @@ pub async fn remove_channel(
 
 #[command]
 pub async fn set_channels(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     options: ChannelOptions,
 ) -> Result<(), Error> {
     spawn_local(move || async move {
-        utils::workspace_context(ctx, workspace)?
+        utils::workspace_context(session, workspace)?
             .set_channels(options)
             .await?;
 
@@ -136,17 +136,17 @@ pub async fn set_channels(
 
 #[command]
 pub async fn list_platforms(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
 ) -> Result<HashMap<EnvironmentName, Vec<PixiPlatformName>>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+    Ok(utils::workspace_context(session, workspace)?
         .list_platforms()
         .await)
 }
 
 #[command]
 pub async fn add_platforms(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     platforms: Vec<Platform>,
     no_install: bool,
@@ -154,7 +154,7 @@ pub async fn add_platforms(
     lock_file_usage: LockFileUsage,
 ) -> Result<(), Error> {
     spawn_local(move || async move {
-        utils::workspace_context(ctx, workspace)?
+        utils::workspace_context(session, workspace)?
             .add_platforms(
                 platforms.into_iter().map(PixiPlatform::from).collect(),
                 no_install,
@@ -170,7 +170,7 @@ pub async fn add_platforms(
 
 #[command]
 pub async fn remove_platforms(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     platforms: Vec<Platform>,
     no_install: bool,
@@ -178,7 +178,7 @@ pub async fn remove_platforms(
     lock_file_usage: LockFileUsage,
 ) -> Result<(), Error> {
     spawn_local(move || async move {
-        utils::workspace_context(ctx, workspace)?
+        utils::workspace_context(session, workspace)?
             .remove_platforms(
                 platforms.into_iter().map(PixiPlatform::from).collect(),
                 no_install,
@@ -198,8 +198,11 @@ pub fn current_platform() -> String {
 }
 
 #[command]
-pub async fn list_features(ctx: Ctx, workspace: PathBuf) -> Result<Vec<FeatureName>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+pub async fn list_features(
+    session: Session,
+    workspace: PathBuf,
+) -> Result<Vec<FeatureName>, Error> {
+    Ok(utils::workspace_context(session, workspace)?
         .list_features()
         .await
         .iter()
@@ -209,56 +212,56 @@ pub async fn list_features(ctx: Ctx, workspace: PathBuf) -> Result<Vec<FeatureNa
 
 #[command]
 pub async fn list_feature_channels(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     feature: &str,
 ) -> Result<Option<IndexSet<PrioritizedChannel>>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+    Ok(utils::workspace_context(session, workspace)?
         .list_feature_channels(feature.into())
         .await)
 }
 
 #[command]
 pub async fn list_feature_dependencies(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     feature: &str,
 ) -> Result<Option<HashMap<PackageName, Vec<PixiSpec>>>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+    Ok(utils::workspace_context(session, workspace)?
         .list_feature_dependencies(feature.into(), None)
         .await)
 }
 
 #[command]
 pub async fn list_feature_pypi_dependencies(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     feature: &str,
 ) -> Result<Option<HashMap<PypiPackageName, Vec<PixiPypiSpec>>>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+    Ok(utils::workspace_context(session, workspace)?
         .list_feature_pypi_dependencies(feature.into(), None)
         .await)
 }
 
 #[command]
 pub async fn list_feature_tasks(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     feature: &str,
 ) -> Result<Option<HashMap<TaskName, Task>>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+    Ok(utils::workspace_context(session, workspace)?
         .list_feature_tasks(feature.into(), None)
         .await)
 }
 
 #[command]
 pub async fn feature_by_task(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     task: &str,
     environment: &str,
 ) -> Result<Option<FeatureName>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+    Ok(utils::workspace_context(session, workspace)?
         .feature_by_task(
             &task.into(),
             &EnvironmentName::from_str(environment).unwrap(),
@@ -267,8 +270,12 @@ pub async fn feature_by_task(
 }
 
 #[command]
-pub async fn remove_feature(ctx: Ctx, workspace: PathBuf, name: &str) -> Result<bool, Error> {
-    let context = utils::workspace_context(ctx, workspace)?;
+pub async fn remove_feature(
+    session: Session,
+    workspace: PathBuf,
+    name: &str,
+) -> Result<bool, Error> {
+    let context = utils::workspace_context(session, workspace)?;
     let feature_name = FeatureName::from_str(name).unwrap();
 
     context.remove_feature(&feature_name).await?;
@@ -277,8 +284,11 @@ pub async fn remove_feature(ctx: Ctx, workspace: PathBuf, name: &str) -> Result<
 }
 
 #[command]
-pub async fn list_environments(ctx: Ctx, workspace: PathBuf) -> Result<Vec<Environment>, Error> {
-    Ok(utils::workspace_context(ctx, workspace)?
+pub async fn list_environments(
+    session: Session,
+    workspace: PathBuf,
+) -> Result<Vec<Environment>, Error> {
+    Ok(utils::workspace_context(session, workspace)?
         .list_environments()
         .await
         .into_iter()
@@ -293,7 +303,7 @@ pub async fn list_environments(ctx: Ctx, workspace: PathBuf) -> Result<Vec<Envir
 
 #[command]
 pub async fn add_environment(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     name: &str,
     features: Option<Vec<String>>,
@@ -301,7 +311,7 @@ pub async fn add_environment(
     no_default_feature: bool,
     force: bool,
 ) -> Result<(), Error> {
-    utils::workspace_context(ctx, workspace)?
+    utils::workspace_context(session, workspace)?
         .add_environment(
             EnvironmentName::from_str(name).unwrap(),
             features,
@@ -315,8 +325,12 @@ pub async fn add_environment(
 }
 
 #[command]
-pub async fn remove_environment(ctx: Ctx, workspace: PathBuf, name: &str) -> Result<(), Error> {
-    utils::workspace_context(ctx, workspace)?
+pub async fn remove_environment(
+    session: Session,
+    workspace: PathBuf,
+    name: &str,
+) -> Result<(), Error> {
+    utils::workspace_context(session, workspace)?
         .remove_environment(name)
         .await?;
 

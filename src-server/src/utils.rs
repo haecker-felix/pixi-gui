@@ -7,7 +7,7 @@ use pixi_api::{
 use strip_ansi_escapes::strip;
 use tokio::{runtime::Handle, task::spawn_blocking};
 
-use crate::{context::Ctx, error::Error};
+use crate::{error::Error, session::Session};
 
 /// Execute a non-`Send` future on a blocking thread while still exposing a `Send`
 /// handle to the async runtime.
@@ -43,10 +43,13 @@ pub fn workspace(workspace: PathBuf) -> Result<Workspace, Error> {
     })
 }
 
-pub fn workspace_context(ctx: Ctx, path: PathBuf) -> Result<WorkspaceContext<Ctx>, Error> {
+pub fn workspace_context(
+    session: Session,
+    path: PathBuf,
+) -> Result<WorkspaceContext<Session>, Error> {
     let workspace = workspace(path)?;
 
-    Ok(WorkspaceContext::new(ctx, workspace))
+    Ok(WorkspaceContext::new(session, workspace))
 }
 
 /// Removes ANSI escape sequences from a string

@@ -19,7 +19,7 @@ use syn::{
 /// reads each parameter from the JSON args object (keyed by the camelCase parameter name, as Tauri
 /// does), calls the function and serializes its return value.
 ///
-/// - A parameter of type `Ctx` receives the command context instead of an argument.
+/// - A parameter of type `Session` receives the calling session instead of an argument.
 /// - `&str` parameters are read as `String`.
 /// - The return value may be any `Serialize` type, or a `Result` whose error converts into
 ///   `crate::error::Error`.
@@ -45,7 +45,7 @@ pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// `tauri::generate_handler!`.
 ///
 /// ```ignore
-/// generate_handler!(ctx, cmd, args, [add::add_conda_deps, pty::pty_list])
+/// generate_handler!(session, cmd, args, [add::add_conda_deps, pty::pty_list])
 /// ```
 ///
 /// Expands to a `match` on `cmd` (the function name) that awaits the command's hidden handler, or
@@ -53,7 +53,7 @@ pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn generate_handler(input: TokenStream) -> TokenStream {
     let HandlerInput {
-        ctx,
+        session,
         cmd,
         args,
         commands,
@@ -76,7 +76,7 @@ pub fn generate_handler(input: TokenStream) -> TokenStream {
         if let Some(last) = handler.segments.last_mut() {
             last.ident = format_ident!("__cmd__{}", last.ident);
         }
-        arms.push(quote! { #name => #handler(#ctx, #args).await, });
+        arms.push(quote! { #name => #handler(#session, #args).await, });
     }
 
     quote! {
@@ -90,9 +90,9 @@ pub fn generate_handler(input: TokenStream) -> TokenStream {
     .into()
 }
 
-/// `ctx, cmd, args, [path, path, ...]`
+/// `session, cmd, args, [path, path, ...]`
 struct HandlerInput {
-    ctx: Ident,
+    session: Ident,
     cmd: Ident,
     args: Ident,
     commands: Punctuated<Path, Token![,]>,
@@ -100,7 +100,7 @@ struct HandlerInput {
 
 impl Parse for HandlerInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let ctx = input.parse()?;
+        let session = input.parse()?;
         input.parse::<Token![,]>()?;
         let cmd = input.parse()?;
         input.parse::<Token![,]>()?;
@@ -112,7 +112,7 @@ impl Parse for HandlerInput {
         let commands = Punctuated::parse_terminated(&content)?;
 
         Ok(Self {
-            ctx,
+            session,
             cmd,
             args,
             commands,
@@ -129,7 +129,7 @@ fn handler(function: &ItemFn) -> syn::Result<proc_macro2::TokenStream> {
 
     let mut reads = Vec::new();
     let mut call_args = Vec::new();
-    let mut uses_ctx = false;
+    let mut uses_session = false;
 
     for input in &sig.inputs {
         let FnArg::Typed(input) = input else {
@@ -142,15 +142,15 @@ fn handler(function: &ItemFn) -> syn::Result<proc_macro2::TokenStream> {
             ));
         };
 
-        if is_ctx(&input.ty) {
-            if uses_ctx {
+        if is_session(&input.ty) {
+            if uses_session {
                 return Err(Error::new(
                     input.span(),
-                    "only one `Ctx` parameter is allowed",
+                    "only one `Session` parameter is allowed",
                 ));
             }
-            uses_ctx = true;
-            call_args.push(quote! { __ctx.clone() });
+            uses_session = true;
+            call_args.push(quote! { __session.clone() });
             continue;
         }
 
@@ -188,16 +188,16 @@ fn handler(function: &ItemFn) -> syn::Result<proc_macro2::TokenStream> {
         quote! { crate::router::respond(::std::result::Result::<_, crate::error::Error>::Ok(#call)) }
     };
 
-    let ctx_unused = (!uses_ctx).then(|| quote! { let _ = &__ctx; });
+    let session_unused = (!uses_session).then(|| quote! { let _ = &__session; });
 
     Ok(quote! {
         #[doc(hidden)]
         #[allow(non_snake_case, unused_mut)]
         #vis async fn #handler_name(
-            __ctx: crate::context::Ctx,
+            __session: crate::session::Session,
             mut __args: ::serde_json::Value,
         ) -> ::std::result::Result<::serde_json::Value, crate::router::DispatchError> {
-            #ctx_unused
+            #session_unused
             #(#reads)*
             #respond
         }
@@ -208,8 +208,8 @@ fn last_segment_is(ty: &Type, name: &str) -> bool {
     matches!(ty, Type::Path(path) if path.path.segments.last().is_some_and(|s| s.ident == name))
 }
 
-fn is_ctx(ty: &Type) -> bool {
-    last_segment_is(ty, "Ctx")
+fn is_session(ty: &Type) -> bool {
+    last_segment_is(ty, "Session")
 }
 
 fn is_str(ty: &Type) -> bool {

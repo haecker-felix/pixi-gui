@@ -9,13 +9,13 @@ use pixi_api::spec::GitReference;
 use pixi_api::workspace::{DependencyOptions, GitOptions};
 use pixi_gui_server_macros::command;
 
-use crate::context::Ctx;
 use crate::error::Error;
+use crate::session::Session;
 use crate::utils::{self, spawn_local};
 
 #[command]
 pub async fn add_conda_deps(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     specs: IndexMap<PackageName, MatchSpec>,
     dep_options: DependencyOptions,
@@ -28,7 +28,7 @@ pub async fn add_conda_deps(
             subdir: None,
         };
 
-        utils::workspace_context(ctx, workspace)?
+        utils::workspace_context(session, workspace)?
             .add_conda_deps(specs, SpecType::Run, dep_options, git_options)
             .await?;
 
@@ -39,7 +39,7 @@ pub async fn add_conda_deps(
 
 #[command]
 pub async fn add_pypi_deps(
-    ctx: Ctx,
+    session: Session,
     workspace: PathBuf,
     pypi_deps: IndexMap<PypiPackageName, Requirement>,
     editable: bool,
@@ -51,7 +51,7 @@ pub async fn add_pypi_deps(
             .map(|(name, req)| (name, (req, None, None)))
             .collect();
 
-        utils::workspace_context(ctx, workspace)?
+        utils::workspace_context(session, workspace)?
             .add_pypi_deps(pypi_deps, editable, dep_options)
             .await?;
 
