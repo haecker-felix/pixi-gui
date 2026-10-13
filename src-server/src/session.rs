@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as SyncMutex};
 
-use log::{debug, warn};
+use log::debug;
 use miette::Result;
 use pixi_api::Interface;
 use pixi_gui_server_macros::command;
@@ -79,8 +79,7 @@ impl Session {
         }
 
         if ptys.contains_key(&pty.id) {
-            warn!("A PTY with that id is already registered: {} ", pty.id);
-            return Ok(());
+            miette::bail!("A process with the id `{}` is already running", pty.id);
         }
         ptys.insert(pty.id.clone(), pty.clone());
 
