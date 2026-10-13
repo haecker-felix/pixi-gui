@@ -89,6 +89,9 @@ impl Server {
 
         let app = app.with_state(server);
 
+        // Debug builds don't bundle the frontend, it gets served by the Vite dev server
+        let port = if cfg!(debug_assertions) { 5173 } else { port };
+
         println!();
         println!("Pixi GUI is running. Open in your browser:");
         println!();
@@ -98,6 +101,11 @@ impl Server {
         println!();
         println!("    ssh -L {port}:localhost:{port} <this host>");
         println!();
+
+        // Not during development, where the server restarts on every change
+        if cfg!(not(debug_assertions)) {
+            let _ = open::that_detached(format!("http://localhost:{port}"));
+        }
 
         axum::serve(listener, app).await
     }

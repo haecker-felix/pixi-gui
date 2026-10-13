@@ -6258,6 +6258,7 @@ dependencies = [
  "nix 0.31.3",
  "notify",
  "notify-debouncer-full",
+ "open",
  "pixi-gui-server-macros",
  "pixi_api",
  "portable-pty",

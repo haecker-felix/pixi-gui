@@ -19,6 +19,7 @@ server = [
   "dep:env_logger",
   "dep:listenfd",
   "dep:memory-serve",
+  "dep:open",
   "dep:uuid",
   "tokio/net",
 ]
@@ -39,6 +40,7 @@ miette = "7"
 nix = "0.31.3"
 notify = "8"
 notify-debouncer-full = "0.7"
+open = { version = "5", optional = true }
 pixi-gui-server-macros.workspace = true
 pixi_api.workspace = true
 portable-pty = "0.9"
