@@ -17,6 +17,48 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  // Listen for notifications
+  useEffect(() => {
+    const unsubscribe = subscribe("notification", (notification) => {
+      switch (notification.level) {
+        case "error":
+          toast.error(notification.message);
+          break;
+        case "warning":
+          toast.warning(notification.message);
+          break;
+        case "success":
+          toast.success(notification.message);
+          break;
+        default:
+          toast.info(notification.message);
+          break;
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Listen for confirm requests
+  useEffect(() => {
+    const unsubscribeConfirm = subscribe(
+      "confirm-request",
+      async ({ id, message }) => {
+        const value = await showConfirm("Confirm", message, "Yes", "No");
+        answerConfirm(id, value).catch((error) =>
+          console.error("Failed to answer confirm request:", error),
+        );
+      },
+    );
+
+    return () => {
+      unsubscribeConfirm();
+    };
+  }, []);
+
+  // Listen for editors that failed to start
   useEffect(() => {
     const unsubscribeEditorError = subscribe("editor-failed", (payload) => {
       const reason =
@@ -48,22 +90,6 @@ function RootComponent() {
 
     return () => {
       unsubscribeEditorError();
-    };
-  }, []);
-
-  useEffect(() => {
-    const unsubscribeConfirm = subscribe(
-      "confirm-request",
-      async ({ id, message }) => {
-        const value = await showConfirm("Confirm", message, "Yes", "No");
-        answerConfirm(id, value).catch((error) =>
-          console.error("Failed to answer confirm request:", error),
-        );
-      },
-    );
-
-    return () => {
-      unsubscribeConfirm();
     };
   }, []);
 

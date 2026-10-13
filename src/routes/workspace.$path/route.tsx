@@ -6,7 +6,6 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { toast } from "sonner";
 
 import { showMessage } from "@/components/common/genericDialog";
 
@@ -97,30 +96,6 @@ function WorkspaceLayout() {
       unsubscribe();
     };
   }, [workspace.manifest, router]);
-
-  // Listen for messages from pixi-api
-  useEffect(() => {
-    const unsubscribe = subscribe("notification", (notification) => {
-      switch (notification.level) {
-        case "error":
-          toast.error(notification.message);
-          break;
-        case "warning":
-          toast.warning(notification.message);
-          break;
-        case "success":
-          toast.success(notification.message);
-          break;
-        default:
-          toast.info(notification.message);
-          break;
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
 
   // Receive pty/task events
   useEffect(() => {
