@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use pixi_api::manifest::{EnvironmentName, Task, TaskName};
-use pixi_gui_server_macros::command;
+use pixi_backend_macros::command;
 
 use crate::session::Session;
 use crate::{error::Error, utils};

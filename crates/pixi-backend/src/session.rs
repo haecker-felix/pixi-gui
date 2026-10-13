@@ -6,9 +6,10 @@ use std::sync::{Arc, Mutex as SyncMutex};
 use log::debug;
 use miette::Result;
 use pixi_api::Interface;
-use pixi_gui_server_macros::command;
+use pixi_backend_macros::command;
 use tokio::sync::{Mutex, mpsc, oneshot};
 
+use crate::app::AppInfo;
 use crate::confirm::ConfirmRequest;
 use crate::error::Error;
 use crate::event::{Event, EventPayload};
@@ -26,6 +27,8 @@ pub type SessionId = String;
 #[derive(Clone)]
 pub struct Session {
     id: SessionId,
+    app: AppInfo,
+
     /// Events for the frontend, which the transport delivers to this session
     event_sender: mpsc::UnboundedSender<Event>,
 
@@ -46,9 +49,10 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn new(id: SessionId, event_sender: mpsc::UnboundedSender<Event>) -> Self {
+    pub fn new(id: SessionId, app: AppInfo, event_sender: mpsc::UnboundedSender<Event>) -> Self {
         Self {
             id,
+            app,
             event_sender,
             ptys: Default::default(),
             exited_ptys: Default::default(),
@@ -57,6 +61,10 @@ impl Session {
             watcher: Default::default(),
             closed: Default::default(),
         }
+    }
+
+    pub fn app(&self) -> AppInfo {
+        self.app
     }
 
     /// Sends an event to the frontend of this session.

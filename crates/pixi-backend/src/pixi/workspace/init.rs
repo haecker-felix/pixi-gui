@@ -1,7 +1,7 @@
 use crate::error::format_error_chain;
 use crate::session::Session;
 use pixi_api::{WorkspaceContext, workspace::InitOptions};
-use pixi_gui_server_macros::command;
+use pixi_backend_macros::command;
 
 #[command]
 pub async fn init(session: Session, options: InitOptions) -> Result<(), String> {

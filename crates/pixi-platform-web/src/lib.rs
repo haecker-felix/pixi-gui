@@ -1,3 +1,6 @@
+//! Runs an app in the browser: an HTTP server that serves the frontend, and talks to
+//! it over a WebSocket.
+
 use std::collections::HashMap;
 use std::io;
 use std::net::Ipv4Addr;
@@ -8,16 +11,49 @@ use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{State as AxumState, WebSocketUpgrade};
 use axum::response::Response;
 use axum::routing::get;
+use clap::Parser;
 use listenfd::ListenFd;
 use log::info;
+use memory_serve::MemoryServe;
+use pixi_backend::event::Event;
+use pixi_backend::{SessionId, State, dispatch};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::net::TcpListener;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-use crate::event::Event;
-use crate::{SessionId, State, dispatch};
+pub use pixi_backend::AppInfo;
+
+pub struct Config {
+    pub app: AppInfo,
+    /// Port to listen on, unless set on the command line
+    pub port: u16,
+    /// Port of the Vite dev server, which serves the frontend in debug builds
+    pub dev_server_port: u16,
+    /// The bundled frontend
+    pub assets: Option<MemoryServe>,
+}
+
+#[derive(Parser)]
+#[command(version)]
+struct Cli {
+    /// Port to listen on, on localhost
+    #[arg(long)]
+    port: Option<u16>,
+}
+
+pub fn run(config: Config) {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    let cli = Cli::parse();
+    let port = cli.port.unwrap_or(config.port);
+
+    let runtime = tokio::runtime::Runtime::new().expect("Failed to start the tokio runtime");
+    if let Err(err) = runtime.block_on(Server::start(config, port)) {
+        eprintln!("Failed to serve on port {port}: {err}");
+        std::process::exit(1);
+    }
+}
 
 /// Sent by the frontend
 #[derive(Deserialize)]
@@ -41,15 +77,14 @@ enum ServerMessage {
 }
 
 #[derive(Clone)]
-pub struct Server {
+struct Server {
     state: State,
     /// Messages for the WebSocket of each connected session
     sessions: Arc<Mutex<HashMap<SessionId, mpsc::UnboundedSender<String>>>>,
 }
 
 impl Server {
-    pub async fn start(port: u16) -> io::Result<()> {
-        // During development watchexec manages the socket
+    async fn start(config: Config, port: u16) -> io::Result<()> {
         let listener = match ListenFd::from_env().take_tcp_listener(0)? {
             Some(listener) => {
                 listener.set_nonblocking(true)?;
@@ -59,7 +94,7 @@ impl Server {
         };
         let port = listener.local_addr()?.port();
 
-        let (state, mut events) = State::new();
+        let (state, mut events) = State::new(config.app);
         let server = Self {
             state,
             sessions: Default::default(),
@@ -75,25 +110,25 @@ impl Server {
 
         let app = Router::new().route("/api/ws", get(Self::handle_ws_upgrade));
 
-        // The frontend only gets bundled in release builds
-        #[cfg(not(debug_assertions))]
-        let app = app.merge(
-            memory_serve::load!()
-                .fallback(Some("/index.html"))
-                .fallback_status(axum::http::StatusCode::OK)
-                // Vite puts a content hash into the names of the files in `assets/`
-                .html_cache_control(memory_serve::CacheControl::NoCache)
-                .cache_control(memory_serve::CacheControl::Long)
-                .into_router(),
-        );
+        let (app, port) = match config.assets {
+            Some(assets) => {
+                let assets = assets
+                    .fallback(Some("/index.html"))
+                    .fallback_status(axum::http::StatusCode::OK)
+                    // Vite puts a content hash into the names of the files in `assets/`
+                    .html_cache_control(memory_serve::CacheControl::NoCache)
+                    .cache_control(memory_serve::CacheControl::Long)
+                    .into_router();
+                (app.merge(assets), port)
+            }
+            // Without bundled frontend, it gets served by the Vite dev server
+            None => (app, config.dev_server_port),
+        };
 
         let app = app.with_state(server);
 
-        // Debug builds don't bundle the frontend, it gets served by the Vite dev server
-        let port = if cfg!(debug_assertions) { 5173 } else { port };
-
         println!();
-        println!("Pixi GUI is running. Open in your browser:");
+        println!("{} is running. Open in your browser:", config.app.name);
         println!();
         println!("    http://localhost:{port}");
         println!();

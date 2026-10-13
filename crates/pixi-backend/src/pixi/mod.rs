@@ -1,4 +1,4 @@
-use pixi_gui_server_macros::command;
+use pixi_backend_macros::command;
 
 use crate::session::Session;
 
@@ -9,8 +9,8 @@ pub async fn pixi_version(session: Session) -> String {
     pixi_api::PIXI_VERSION.to_string()
 }
 #[command]
-pub fn app_name() -> &'static str {
-    "Pixi GUI"
+pub fn app_name(session: Session) -> &'static str {
+    session.app().name
 }
 #[command]
 pub fn app_version() -> &'static str {

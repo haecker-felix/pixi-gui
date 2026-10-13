@@ -1,30 +1,41 @@
-pub mod api;
-pub mod platform;
+//! Runs an app as desktop application with Tauri, and talks to the frontend over Tauri IPC.
+
+pub mod os;
 pub mod window;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-use clap::Parser;
-use pixi_gui_server::{SessionId, State};
-use tauri::{Emitter, Manager, WindowEvent};
+use clap::{CommandFactory, Parser};
+use pixi_backend::{SessionId, State, dispatch};
+use serde_json::Value;
+use tauri::{AppHandle, Emitter, Manager, WindowEvent};
+
+pub use pixi_backend::AppInfo;
+
+pub struct Config {
+    pub app: AppInfo,
+    /// Opens a window for a path the app was launched with: on the command line, by a second
+    /// instance, or by a file association. Without it, the app doesn't take a path.
+    pub open_path: Option<fn(&AppHandle, &Path)>,
+}
 
 #[derive(Parser)]
 #[command(version = option_env!("PIXI_GUI_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))]
 #[command(about = env!("CARGO_PKG_DESCRIPTION"))]
-pub struct Cli {
-    /// Path to the Pixi workspace directory
+struct Cli {
+    /// Path to open
     #[arg()]
-    pub workspace: Option<PathBuf>,
+    path: Option<PathBuf>,
 
     #[cfg(not(debug_assertions))]
     /// Disables automatic app relaunch (detaches from terminal)
     #[arg(long)]
-    pub no_relaunch: bool,
+    no_relaunch: bool,
 }
 
 impl Cli {
-    pub fn absolute_workspace_path(&self, cwd: Option<&str>) -> Option<PathBuf> {
-        self.workspace.as_ref().map(|path| {
+    fn absolute_path(&self, cwd: Option<&str>) -> Option<PathBuf> {
+        self.path.as_ref().map(|path| {
             if path.is_absolute() {
                 path.clone()
             } else {
@@ -38,21 +49,60 @@ impl Cli {
     }
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run(workspace_path: Option<String>) {
+pub fn run(config: Config, context: tauri::Context) {
+    // Disable DMA-BUF renderer for WebKit on Linux to avoid graphics glitches with AMDGPU drivers
+    #[cfg(target_os = "linux")]
+    unsafe {
+        // Called before any threads are spawned and only set once -> safe.
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
+
+    let cli = Cli::parse();
+    if cli.path.is_some() && config.open_path.is_none() {
+        Cli::command()
+            .error(
+                clap::error::ErrorKind::UnknownArgument,
+                "This app doesn't open paths",
+            )
+            .exit();
+    }
+    let path = cli
+        .absolute_path(None)
+        .map(|p| p.to_string_lossy().to_string());
+
+    // Relaunch as detached process when started from terminal (like VSCode does)
+    #[cfg(not(debug_assertions))]
+    if os::launched_via_terminal() && !cli.no_relaunch {
+        #[cfg(target_os = "macos")]
+        if os::osx::relaunch_via_launchd(config.app.name, path.as_deref()) {
+            return;
+        }
+
+        #[cfg(target_os = "linux")]
+        if os::linux::relaunch_detached(path.as_deref()) {
+            return;
+        }
+
+        #[cfg(target_os = "windows")]
+        if os::windows::relaunch_detached(path.as_deref()) {
+            return;
+        }
+    }
+
+    let open = move |app: &AppHandle, path: Option<&Path>| match (path, config.open_path) {
+        (Some(path), Some(open_path)) => open_path(app, path),
+        _ => window::create_default_window(app),
+    };
+
     let app = tauri::Builder::default();
 
-    app.plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
+    app.plugin(tauri_plugin_single_instance::init(move |app, args, cwd| {
         // When a second instance is launched, this callback receives its CLI arguments
         let Ok(cli) = Cli::try_parse_from(args) else {
             return;
         };
 
-        if let Some(workspace) = cli.absolute_workspace_path(Some(&cwd)) {
-            window::ensure_workspace_window(app, &workspace);
-        } else {
-            window::create_default_window(app);
-        }
+        open(app, cli.absolute_path(Some(&cwd)).as_deref());
     }))
     .plugin(
         tauri_plugin_log::Builder::new()
@@ -66,7 +116,7 @@ pub fn run(workspace_path: Option<String>) {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_notification::init())
-    .invoke_handler(tauri::generate_handler![api::api, window::open_new_window,])
+    .invoke_handler(tauri::generate_handler![api, window::open_new_window,])
     .on_window_event(|window, event| match event {
         // Close the workspace first, which asks the user if it still has running processes
         WindowEvent::CloseRequested { api, .. } => {
@@ -95,7 +145,7 @@ pub fn run(workspace_path: Option<String>) {
         _ => {}
     })
     .setup(move |app| {
-        let (state, mut event_receiver) = State::new();
+        let (state, mut event_receiver) = State::new(config.app);
         app.manage(state);
 
         // Deliver backend events to the window they belong to (session = window label)
@@ -109,8 +159,8 @@ pub fn run(workspace_path: Option<String>) {
         });
 
         // On Linux and Windows, file associations launch a new process with the file path in CLI args
-        if let Some(workspace) = &workspace_path {
-            window::ensure_workspace_window(app.handle(), &std::path::PathBuf::from(workspace));
+        if let Some(path) = &path {
+            open(app.handle(), Some(Path::new(path)));
         } else if cfg!(target_os = "linux") || cfg!(target_os = "windows") {
             // No files were opened -> Open default window
             window::create_default_window(app.handle());
@@ -118,11 +168,11 @@ pub fn run(workspace_path: Option<String>) {
 
         Ok(())
     })
-    .build(tauri::generate_context!())
+    .build(context)
     .expect("Error while running Tauri application")
-    .run(|app, event| {
+    .run(move |app, event| {
         #[cfg(not(target_os = "macos"))]
-        let _ = (app, event);
+        let _ = (app, event, open);
 
         // On macOS, file associations reuse the existing process and send `RunEvent::Opened` events
         #[cfg(target_os = "macos")]
@@ -131,8 +181,8 @@ pub fn run(workspace_path: Option<String>) {
                 log::info!("Received RunEvent::Opened with {} URL(s)", urls.len());
                 for url in urls {
                     if let Ok(path) = url.to_file_path() {
-                        log::info!("Opening workspace from URL: {}", path.display());
-                        window::ensure_workspace_window(app, &path);
+                        log::info!("Opening path from URL: {}", path.display());
+                        open(app, Some(&path));
                     }
                 }
             }
@@ -146,4 +196,18 @@ pub fn run(workspace_path: Option<String>) {
             _ => {}
         }
     });
+}
+
+/// Single entry point for all backend commands. The calling window is the session.
+#[tauri::command]
+async fn api(
+    window: tauri::Window,
+    state: tauri::State<'_, State>,
+    cmd: String,
+    args: Value,
+) -> Result<Value, String> {
+    let session = state.session(window.label());
+    dispatch(session, &cmd, args)
+        .await
+        .map_err(|e| e.to_string())
 }

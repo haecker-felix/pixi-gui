@@ -1,21 +1,18 @@
-use clap::Parser;
-use pixi_gui_server::server::Server;
+use pixi_platform_web::{AppInfo, Config};
 
-#[derive(Parser)]
-#[command(version, about)]
-struct Cli {
-    /// Port to listen on, on localhost
-    #[arg(long, default_value_t = 5174)]
-    port: u16,
-}
+const APP_INFO: AppInfo = AppInfo {
+    name: "Pixi GUI Web",
+    identifier: "dev.prefix.pixi-gui",
+};
 
-#[tokio::main]
-async fn main() {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-    let cli = Cli::parse();
-
-    if let Err(err) = Server::start(cli.port).await {
-        eprintln!("Failed to serve on port {}: {err}", cli.port);
-        std::process::exit(1);
-    }
+fn main() {
+    pixi_platform_web::run(Config {
+        app: APP_INFO,
+        port: 5174,
+        dev_server_port: 5173,
+        #[cfg(debug_assertions)]
+        assets: None,
+        #[cfg(not(debug_assertions))]
+        assets: Some(memory_serve::load!()),
+    });
 }
