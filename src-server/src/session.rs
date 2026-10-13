@@ -46,7 +46,7 @@ pub struct Session {
 }
 
 impl Session {
-    pub(crate) fn new(id: SessionId, event_sender: mpsc::UnboundedSender<Event>) -> Self {
+    pub fn new(id: SessionId, event_sender: mpsc::UnboundedSender<Event>) -> Self {
         Self {
             id,
             event_sender,
@@ -65,15 +65,15 @@ impl Session {
         let _ = self.event_sender.send(event);
     }
 
-    pub(crate) async fn pty(&self, id: &str) -> Option<Arc<PtyHandle>> {
+    pub async fn pty(&self, id: &str) -> Option<Arc<PtyHandle>> {
         self.ptys.lock().await.get(id).cloned()
     }
 
-    pub(crate) async fn ptys(&self) -> Vec<Arc<PtyHandle>> {
+    pub async fn ptys(&self) -> Vec<Arc<PtyHandle>> {
         self.ptys.lock().await.values().cloned().collect()
     }
 
-    pub(crate) async fn add_pty(&self, pty: Arc<PtyHandle>) -> Result<()> {
+    pub async fn add_pty(&self, pty: Arc<PtyHandle>) -> Result<()> {
         // Checked while holding the lock, so it can't get added after `close` collected the PTYs
         let mut ptys = self.ptys.lock().await;
         if self.closed.load(Ordering::SeqCst) {
@@ -90,7 +90,7 @@ impl Session {
         Ok(())
     }
 
-    pub(crate) async fn remove_pty(&self, id: &str, exit_event: PtyExitEvent) {
+    pub async fn remove_pty(&self, id: &str, exit_event: PtyExitEvent) {
         let mut ptys = self.ptys.lock().await;
         ptys.remove(id);
 
@@ -102,12 +102,12 @@ impl Session {
             .insert(id.to_string(), exit_event);
     }
 
-    pub(crate) async fn exit_event(&self, id: &str) -> Option<PtyExitEvent> {
+    pub async fn exit_event(&self, id: &str) -> Option<PtyExitEvent> {
         self.exited_ptys.lock().await.get(id).cloned()
     }
 
     /// Shows a question to the user and waits for the answer
-    async fn request_confirm(
+    pub async fn request_confirm(
         &self,
         title: &str,
         message: &str,
@@ -137,13 +137,13 @@ impl Session {
         answer.await.unwrap_or(false)
     }
 
-    pub(crate) fn answer_confirm(&self, id: u64, value: bool) {
+    pub fn answer_confirm(&self, id: u64, value: bool) {
         if let Some(sender) = self.confirms.lock().unwrap().remove(&id) {
             let _ = sender.send(value);
         }
     }
 
-    pub(crate) async fn open_workspace(&self, manifest: PathBuf) -> Result<()> {
+    pub async fn open_workspace(&self, manifest: PathBuf) -> Result<()> {
         // Start watching the workspace manifest
         let mut watcher = self.watcher.lock().await;
         *watcher = None;
@@ -157,7 +157,7 @@ impl Session {
         Ok(())
     }
 
-    pub(crate) async fn close_workspace(&self) -> bool {
+    pub async fn close_workspace(&self) -> bool {
         if !self.ptys().await.is_empty() {
             let terminate = self
                 .request_confirm(

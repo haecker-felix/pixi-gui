@@ -40,11 +40,4 @@ export const tauriPlatform: Platform = {
 
     sendNotification({ title, body });
   },
-  onCloseRequested: (handler) =>
-    getCurrentWebviewWindow().onCloseRequested(async (event) => {
-      if (!(await handler())) {
-        // Prevent that window gets closed
-        event.preventDefault();
-      }
-    }),
 };

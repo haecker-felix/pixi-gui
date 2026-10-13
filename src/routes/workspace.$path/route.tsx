@@ -128,19 +128,6 @@ function WorkspaceLayout() {
     };
   }, []);
 
-  // Window gets closed
-  useEffect(() => {
-    const unlisten = platform.onCloseRequested(closeWorkspace);
-
-    return () => {
-      unlisten
-        .then((u) => u())
-        .catch((reason) =>
-          console.error("Could not unlisten workspace listener: ", reason),
-        );
-    };
-  }, []);
-
   // User navigates away from /workspace
   useBlocker({
     shouldBlockFn: async ({ next }) => {
@@ -148,7 +135,7 @@ function WorkspaceLayout() {
         return !(await closeWorkspace());
       return false;
     },
-    // Closing the window is handled by `platform.onCloseRequested`,
+    // Closing the window gets handled by Tauri
     enableBeforeUnload: false,
   });
 

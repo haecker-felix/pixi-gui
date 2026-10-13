@@ -34,9 +34,6 @@ export interface Platform {
 
   openNewWindow(): Promise<void>;
   desktopNotification(title: string, body: string): Promise<void>;
-
-  /** Calls `handler` when the user closes the window. Closing is cancelled when it resolves to `false`. */
-  onCloseRequested(handler: () => Promise<boolean>): Promise<() => void>;
 }
 
 export interface PickPathOptions {

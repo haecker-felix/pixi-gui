@@ -67,13 +67,32 @@ pub fn run(workspace_path: Option<String>) {
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_notification::init())
     .invoke_handler(tauri::generate_handler![api::api, window::open_new_window,])
-    .on_window_event(|window, event| {
-        // Clean up what closed windows left behind: processes, watchers, open confirm questions
-        if let WindowEvent::Destroyed = event {
+    .on_window_event(|window, event| match event {
+        // Close the workspace first, which asks the user if it still has running processes
+        WindowEvent::CloseRequested { api, .. } => {
+            api.prevent_close();
+
+            let session = window.state::<State>().session(window.label());
+            let window = window.clone();
+
+            tauri::async_runtime::spawn(async move {
+                // The user wants to keep the workspace open
+                if !session.close_workspace().await {
+                    return;
+                }
+
+                // Not `close`, as that would request to close the window again
+                if let Err(e) = window.destroy() {
+                    log::error!("Failed to close window {}: {e}", window.label());
+                }
+            });
+        }
+        WindowEvent::Destroyed => {
             let state = window.state::<State>().inner().clone();
             let session: SessionId = window.label().to_string();
             tauri::async_runtime::spawn(async move { state.close_session(&session).await });
         }
+        _ => {}
     })
     .setup(move |app| {
         let (state, mut event_receiver) = State::new();

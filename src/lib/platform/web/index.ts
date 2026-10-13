@@ -42,6 +42,4 @@ export const webPlatform: Platform = {
 
     new Notification(title, { body });
   },
-  // The server terminates the processes of the tab when its connection closes
-  onCloseRequested: async () => () => {},
 };
