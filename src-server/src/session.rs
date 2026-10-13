@@ -17,10 +17,12 @@ use crate::pty::{PtyExitEvent, PtyHandle};
 use crate::utils;
 use crate::watcher::{self, ManifestWatcher};
 
-/// The name of one frontend instance, i.e. who called a command.
-/// One exists per window. On desktop this is the Tauri window label.
 pub type SessionId = String;
 
+/// One instance of the frontend: a window of the Tauri app, or a browser tab
+/// connected to the server. It holds what belongs to that instance, and ends
+/// when the window gets closed or the connection drops. Every command gets
+/// the session of its caller.
 #[derive(Clone)]
 pub struct Session {
     id: SessionId,
@@ -104,17 +106,35 @@ impl Session {
         self.exited_ptys.lock().await.get(id).cloned()
     }
 
-    pub(crate) fn request_confirm(&self) -> (u64, oneshot::Receiver<bool>) {
+    /// Shows a question to the user and waits for the answer
+    async fn request_confirm(
+        &self,
+        title: &str,
+        message: &str,
+        ok_label: &str,
+        cancel_label: &str,
+    ) -> bool {
         let id = self.next_confirm_id.fetch_add(1, Ordering::Relaxed);
-        let (sender, receiver) = oneshot::channel();
+        let (sender, answer) = oneshot::channel();
 
-        // Dropping the sender of an ended session answers with "no"
-        let mut confirms = self.confirms.lock().unwrap();
-        if !self.closed.load(Ordering::SeqCst) {
+        {
+            let mut confirms = self.confirms.lock().unwrap();
+            if self.closed.load(Ordering::SeqCst) {
+                return false;
+            }
             confirms.insert(id, sender);
         }
 
-        (id, receiver)
+        self.send_event(EventPayload::ConfirmRequest(ConfirmRequest {
+            id,
+            title: title.to_string(),
+            message: message.to_string(),
+            ok_label: ok_label.to_string(),
+            cancel_label: cancel_label.to_string(),
+        }));
+
+        // A dropped sender counts as "no"
+        answer.await.unwrap_or(false)
     }
 
     pub(crate) fn answer_confirm(&self, id: u64, value: bool) {
@@ -139,8 +159,15 @@ impl Session {
 
     pub(crate) async fn close_workspace(&self) -> bool {
         if !self.ptys().await.is_empty() {
-            let message = "Do you want to terminate running processes in this workspace?";
-            if !self.confirm(message).await.unwrap_or(false) {
+            let terminate = self
+                .request_confirm(
+                    "Close Workspace?",
+                    "Do you want to terminate running processes in this workspace?",
+                    "Terminate",
+                    "Cancel",
+                )
+                .await;
+            if !terminate {
                 return false;
             }
         }
@@ -198,18 +225,9 @@ impl Interface for Session {
         false
     }
 
-    /// Asks the frontend with a `confirm-request` event; it answers with the
-    /// `answer_confirm` command.
     async fn confirm(&self, msg: &str) -> Result<bool> {
-        let (id, answer) = self.request_confirm();
-
-        self.send_event(EventPayload::ConfirmRequest(ConfirmRequest {
-            id,
-            message: utils::strip_ansi_escapes(msg),
-        }));
-
-        // A dropped sender counts as "no"
-        Ok(answer.await.unwrap_or(false))
+        let message = utils::strip_ansi_escapes(msg);
+        Ok(self.request_confirm("Confirm", &message, "Yes", "No").await)
     }
 
     async fn info(&self, msg: &str) {

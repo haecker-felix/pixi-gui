@@ -45,8 +45,8 @@ function RootComponent() {
   useEffect(() => {
     const unsubscribeConfirm = subscribe(
       "confirm-request",
-      async ({ id, message }) => {
-        const value = await showConfirm("Confirm", message, "Yes", "No");
+      async ({ id, title, message, okLabel, cancelLabel }) => {
+        const value = await showConfirm(title, message, okLabel, cancelLabel);
         answerConfirm(id, value).catch((error) =>
           console.error("Failed to answer confirm request:", error),
         );

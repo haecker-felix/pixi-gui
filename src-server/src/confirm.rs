@@ -3,11 +3,15 @@ use serde::Serialize;
 
 use crate::session::Session;
 
-/// Gets sent when pixi asks the user a question
+/// Gets sent when the backend asks the user a question
 #[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ConfirmRequest {
     pub id: u64,
+    pub title: String,
     pub message: String,
+    pub ok_label: String,
+    pub cancel_label: String,
 }
 
 /// Answers a `confirm-request` event.
