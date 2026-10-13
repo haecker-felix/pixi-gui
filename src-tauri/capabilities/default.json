@@ -3,10 +3,5 @@
   "identifier": "default",
   "description": "Capability for the main window",
   "windows": ["*"],
-  "permissions": [
-    "core:default",
-    "core:window:allow-destroy",
-    "dialog:default",
-    "notification:default"
-  ]
+  "permissions": ["core:default", "dialog:default", "notification:default"]
 }
