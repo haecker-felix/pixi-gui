@@ -1,4 +1,4 @@
-//! The `#[command]` attribute and `generate_handler!` for backend commands of `pixi_gui_server`.
+//! The `#[command]` attribute and `generate_handler!` for backend commands of `pixi_backend`.
 
 use std::collections::HashSet;
 
@@ -13,7 +13,7 @@ use syn::{
     spanned::Spanned,
 };
 
-/// Makes a function callable through `pixi_gui_server::dispatch`, like `#[tauri::command]`.
+/// Makes a function callable through `pixi_backend::dispatch`, like `#[tauri::command]`.
 ///
 /// The function stays unchanged. Next to it, a hidden handler `__cmd__<name>` is generated which
 /// reads each parameter from the JSON args object (keyed by the camelCase parameter name, as Tauri

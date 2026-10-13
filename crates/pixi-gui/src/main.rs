@@ -7,40 +7,37 @@
 #[used]
 static STACK_SIZE: [u8; 23] = *b" /STACK:8388608,8388608";
 
-use clap::Parser;
-use pixi_gui_lib::Cli;
+use std::path::Path;
+
+use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
+use pixi_platform_tauri::{AppInfo, Config, window};
+use tauri::AppHandle;
+
+const APP_INFO: AppInfo = AppInfo {
+    name: "Pixi GUI",
+    identifier: "dev.prefix.pixi-gui",
+};
 
 fn main() {
-    // Disable DMA-BUF renderer for WebKit on Linux to avoid graphics glitches with AMDGPU drivers
-    #[cfg(target_os = "linux")]
-    unsafe {
-        // Called before any threads are spawned and only set once -> safe.
-        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-    }
+    pixi_platform_tauri::run(
+        Config {
+            app: APP_INFO,
+            open_path: Some(open_workspace),
+        },
+        tauri::generate_context!(),
+    );
+}
 
-    let cli = Cli::parse();
-    let workspace = cli
-        .absolute_workspace_path(None)
-        .map(|p| p.to_string_lossy().to_string());
+fn open_workspace(app: &AppHandle, path: &Path) {
+    // If a file is passed (e.g., pixi.toml), use its parent directory
+    let workspace = if path.is_file() {
+        path.parent().unwrap_or(path)
+    } else {
+        path
+    };
 
-    // Relaunch as detached process when started from terminal (like VSCode does)
-    #[cfg(not(debug_assertions))]
-    if pixi_gui_lib::platform::launched_via_terminal() && !cli.no_relaunch {
-        #[cfg(target_os = "macos")]
-        if pixi_gui_lib::platform::osx::relaunch_via_launchd(workspace.as_deref()) {
-            return;
-        }
-
-        #[cfg(target_os = "linux")]
-        if pixi_gui_lib::platform::linux::relaunch_detached(workspace.as_deref()) {
-            return;
-        }
-
-        #[cfg(target_os = "windows")]
-        if pixi_gui_lib::platform::windows::relaunch_detached(workspace.as_deref()) {
-            return;
-        }
-    }
-
-    pixi_gui_lib::run(workspace)
+    let path = workspace.to_string_lossy();
+    let path = path.trim_end_matches('/');
+    let encoded = utf8_percent_encode(path, NON_ALPHANUMERIC);
+    window::ensure_window(app, &format!("/workspace/{encoded}"));
 }

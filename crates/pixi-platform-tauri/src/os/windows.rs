@@ -31,7 +31,7 @@ pub fn relaunch_detached(workspace: Option<&str>) -> bool {
     match command.spawn() {
         Ok(_) => true,
         Err(err) => {
-            error!("Unable to relaunch Pixi GUI: {err}");
+            error!("Unable to relaunch: {err}");
             false
         }
     }

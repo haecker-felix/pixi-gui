@@ -10,7 +10,7 @@ use pixi_api::{
     manifest::{EnvironmentName, HasFeaturesIter},
     rattler_conda_types::PackageName,
 };
-use pixi_gui_server_macros::command;
+use pixi_backend_macros::command;
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncBufReadExt;
 use tokio::process::Command;

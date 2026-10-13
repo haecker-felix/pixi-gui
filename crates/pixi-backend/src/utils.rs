@@ -34,7 +34,7 @@ pub fn workspace(workspace: PathBuf) -> Result<Workspace, Error> {
     workspace_result.map_err(|err| match err {
         WorkspaceLocatorError::PixiVersionMismatch(mismatch) => {
             let msg = format!(
-                "This workspace requires pixi '{}'.\nBut this version of pixi-gui is built with pixi {}",
+                "This workspace requires pixi '{}'.\nBut this app is built with pixi {}",
                 mismatch.requires_pixi, PIXI_VERSION
             );
             miette::miette!(msg).into()

@@ -11,7 +11,7 @@ use tokio::sync::Mutex;
 use tokio::sync::watch;
 use tokio::time::timeout;
 
-use pixi_gui_server_macros::command;
+use pixi_backend_macros::command;
 
 use crate::{error::Error, event::EventPayload, session::Session};
 

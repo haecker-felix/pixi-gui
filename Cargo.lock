@@ -6218,18 +6218,76 @@ dependencies = [
 ]
 
 [[package]]
+name = "pixi-backend"
+version = "0.1.0"
+dependencies = [
+ "dirs 6.0.0",
+ "humantime",
+ "indexmap 2.14.2",
+ "libc",
+ "log",
+ "memchr",
+ "miette 7.6.0",
+ "nix 0.31.3",
+ "notify",
+ "notify-debouncer-full",
+ "pixi-backend-macros",
+ "pixi_api",
+ "portable-pty",
+ "serde",
+ "serde_json",
+ "strip-ansi-escapes",
+ "strum",
+ "tempfile",
+ "tokio",
+ "tokio-test",
+ "which",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "pixi-backend-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "pixi-gui"
+version = "0.1.0"
+dependencies = [
+ "percent-encoding",
+ "pixi-platform-tauri",
+ "tao 0.35.3",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-log",
+ "tauri-plugin-notification",
+ "tauri-plugin-opener",
+]
+
+[[package]]
+name = "pixi-gui-web"
+version = "0.1.0"
+dependencies = [
+ "memory-serve",
+ "pixi-platform-web",
+]
+
+[[package]]
+name = "pixi-platform-tauri"
 version = "0.1.0"
 dependencies = [
  "clap",
  "dunce",
  "log",
  "percent-encoding",
- "pixi-gui-server",
+ "pixi-backend",
  "serde_json",
- "tao 0.35.3",
  "tauri",
- "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-log",
  "tauri-plugin-notification",
@@ -6240,47 +6298,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "pixi-gui-server"
+name = "pixi-platform-web"
 version = "0.1.0"
 dependencies = [
  "axum",
  "clap",
- "dirs 6.0.0",
  "env_logger",
- "humantime",
- "indexmap 2.14.2",
- "libc",
  "listenfd",
  "log",
- "memchr",
  "memory-serve",
- "miette 7.6.0",
- "nix 0.31.3",
- "notify",
- "notify-debouncer-full",
  "open",
- "pixi-gui-server-macros",
- "pixi_api",
- "portable-pty",
+ "pixi-backend",
  "serde",
  "serde_json",
- "strip-ansi-escapes",
- "strum",
- "tempfile",
  "tokio",
- "tokio-test",
  "uuid",
- "which",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "pixi-gui-server-macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
 ]
 
 [[package]]

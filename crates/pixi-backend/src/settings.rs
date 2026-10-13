@@ -1,25 +1,31 @@
 //! Uses the same location and format as previously used `tauri-plugin-store` plugin:
-//! `<data dir>/dev.prefix.pixi-gui/<store>` containing a `{key: value}` JSON object.
+//! `<data dir>/<app identifier>/<store>` containing a `{key: value}` JSON object.
 
 use std::fs::{self, File};
 use std::io::ErrorKind;
 use std::path::PathBuf;
 
 use miette::{IntoDiagnostic, miette};
-use pixi_gui_server_macros::command;
+use pixi_backend_macros::command;
 use serde_json::{Map, Value};
 
 use crate::error::Error;
+use crate::session::Session;
 
 #[command]
-pub fn settings_get(store: String, key: String) -> Result<Option<Value>, Error> {
-    let path = store_path(&store)?;
+pub fn settings_get(session: Session, store: String, key: String) -> Result<Option<Value>, Error> {
+    let path = store_path(session, &store)?;
     Ok(read_store(&path)?.remove(&key))
 }
 
 #[command]
-pub fn settings_set(store: String, key: String, value: Value) -> Result<(), Error> {
-    let path = store_path(&store)?;
+pub fn settings_set(
+    session: Session,
+    store: String,
+    key: String,
+    value: Value,
+) -> Result<(), Error> {
+    let path = store_path(session, &store)?;
     fs::create_dir_all(path.parent().unwrap()).into_diagnostic()?;
 
     let lock = File::create(path.with_added_extension("lock")).into_diagnostic()?;
@@ -40,9 +46,9 @@ pub fn settings_set(store: String, key: String, value: Value) -> Result<(), Erro
     Ok(())
 }
 
-fn store_path(store: &str) -> Result<PathBuf, Error> {
+fn store_path(session: Session, store: &str) -> Result<PathBuf, Error> {
     let data_dir = dirs::data_dir().ok_or_else(|| miette!("No data directory available"))?;
-    Ok(data_dir.join("dev.prefix.pixi-gui").join(store))
+    Ok(data_dir.join(session.app().identifier).join(store))
 }
 
 fn read_store(path: &PathBuf) -> Result<Map<String, Value>, Error> {

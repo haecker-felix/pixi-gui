@@ -1,4 +1,4 @@
-use pixi_gui_server_macros::command;
+use pixi_backend_macros::command;
 use serde::Serialize;
 
 use crate::session::Session;

@@ -3,12 +3,15 @@ use std::sync::{Arc, Mutex};
 
 use tokio::sync::mpsc;
 
+use crate::app::AppInfo;
 use crate::event::Event;
 use crate::session::{Session, SessionId};
 
 /// Everything the backend keeps in memory
 #[derive(Clone)]
 pub struct State {
+    app: AppInfo,
+
     /// Events for the frontend, which the transport delivers to their session
     event_sender: mpsc::UnboundedSender<Event>,
     sessions: Arc<Mutex<HashMap<SessionId, Session>>>,
@@ -16,13 +19,18 @@ pub struct State {
 
 impl State {
     /// The transport is responsible to forward the events to the frontend session
-    pub fn new() -> (Self, mpsc::UnboundedReceiver<Event>) {
+    pub fn new(app: AppInfo) -> (Self, mpsc::UnboundedReceiver<Event>) {
         let (tx, rx) = mpsc::unbounded_channel();
         let state = Self {
+            app,
             event_sender: tx,
             sessions: Default::default(),
         };
         (state, rx)
+    }
+
+    pub fn app(&self) -> AppInfo {
+        self.app
     }
 
     /// Returns session with that id, start a new one if it doesn't exists yet
@@ -32,7 +40,7 @@ impl State {
             .lock()
             .unwrap()
             .entry(id.clone())
-            .or_insert_with(|| Session::new(id, self.event_sender.clone()))
+            .or_insert_with(|| Session::new(id, self.app, self.event_sender.clone()))
             .clone()
     }
 
