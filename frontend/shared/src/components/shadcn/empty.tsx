@@ -1,6 +1,6 @@
-import { CircularIcon } from "@/components/common/circularIcon";
+import { CircularIcon } from "#components/common/circularIcon";
 
-import { cn } from "@/lib/utils";
+import { cn } from "#lib/utils";
 
 function Empty({ className, ...props }: React.ComponentProps<"div">) {
   return (

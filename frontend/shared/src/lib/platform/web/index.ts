@@ -1,7 +1,7 @@
-import { showPrompt } from "@/components/common/genericDialog";
+import { showPrompt } from "#components/common/genericDialog";
 
-import type { Platform } from "@/lib/platform";
-import * as websocket from "@/lib/platform/web/websocket";
+import type { Platform } from "#lib/platform";
+import * as websocket from "#lib/platform/web/websocket";
 
 export const webPlatform: Platform = {
   invoke: websocket.invoke,

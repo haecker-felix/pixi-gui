@@ -1,18 +1,19 @@
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { Bug, CirclePlay, PackageIcon, ScrollTextIcon } from "lucide-react";
 
-import { AppMenu } from "@/components/common/appMenu";
-import { Header } from "@/components/common/header";
-import { Debug } from "@/components/pixi/debug";
-import { Environments } from "@/components/pixi/environments/environments";
-import { Inspect } from "@/components/pixi/inspect/inspect";
-import { Manifest } from "@/components/pixi/manifest/manifest";
+import { AppMenu } from "shared/components/common/appMenu";
+import { Header } from "shared/components/common/header";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/shadcn/tabs";
+} from "shared/components/shadcn/tabs";
+
+import { Debug } from "@/components/debug";
+import { Environments } from "@/components/environments/environments";
+import { Inspect } from "@/components/inspect/inspect";
+import { Manifest } from "@/components/manifest/manifest";
 
 export const Route = createFileRoute("/workspace/$path/")({
   component: WorkspaceComponent,

@@ -1,17 +1,18 @@
 import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Row } from "@/components/common/row";
-import { Button } from "@/components/shadcn/button";
+import { Row } from "#components/common/row";
+import { Button } from "#components/shadcn/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
-} from "@/components/shadcn/dialog";
+} from "#components/shadcn/dialog";
 
-import { getAppName, getAppVersion, getPixiVersion } from "@/lib/pixi/version";
-import { openExternal } from "@/lib/utils";
+import paxton from "#assets/paxton.png";
+import { openExternal } from "#lib/utils";
+import { getAppName, getAppVersion, getPixiVersion } from "#lib/version";
 
 interface AboutDialogProps {
   open: boolean;
@@ -48,7 +49,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           App version details
         </DialogDescription>
         <div className="flex flex-col items-center">
-          <img src="/paxton.png" alt="Paxton" className="h-32 mt-pfx-m" />
+          <img src={paxton} alt="Paxton" className="h-32 mt-pfx-m" />
 
           <h2 className="font-display text-pfxh-s mt-pfx-ml">{appName}</h2>
           <p className="mt-pfx-s">

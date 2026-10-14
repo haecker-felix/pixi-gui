@@ -1,5 +1,5 @@
-import type { Workspace } from "@/lib/pixi/workspace/workspace";
-import { createStore } from "@/lib/settings";
+import type { Workspace } from "shared/lib/pixi/workspace/workspace";
+import { createStore } from "shared/lib/settings";
 
 export interface RecentWorkspaceEntry {
   manifest: string;

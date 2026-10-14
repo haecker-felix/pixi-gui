@@ -2,8 +2,8 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
-import { GenericDialogHost } from "@/components/common/genericDialog";
-import { Toaster } from "@/components/shadcn/sonner";
+import { GenericDialogHost } from "shared/components/common/genericDialog";
+import { Toaster } from "shared/components/shadcn/sonner";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";

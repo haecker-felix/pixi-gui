@@ -2,9 +2,9 @@ import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import type * as React from "react";
 
-import { type PresetIcon, presetIcons } from "@/components/common/circularIcon";
+import { type PresetIcon, presetIcons } from "#components/common/circularIcon";
 
-import { cn } from "@/lib/utils";
+import { cn } from "#lib/utils";
 
 const badgeVariants = cva(
   "inline-flex items-center justify-center rounded-lg h-7 px-2 py-0.5 font-medium text-pfxl-text-contrast-higher dark:text-pfxd-text-contrast-higher w-fit whitespace-nowrap shrink-0 [&>svg]:size-4 gap-1 [&>svg]:pointer-events-none overflow-hidden",

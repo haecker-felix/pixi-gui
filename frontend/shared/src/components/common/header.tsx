@@ -1,7 +1,7 @@
 import { Boxes } from "lucide-react";
 import { type ReactNode } from "react";
 
-import { CircularIcon } from "@/components/common/circularIcon";
+import { CircularIcon } from "#components/common/circularIcon";
 
 interface HeaderProps {
   title: string;

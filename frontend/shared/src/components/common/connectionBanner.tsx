@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-import { platform } from "@/lib/platform";
+import { platform } from "#lib/platform";
 
 export function ConnectionBanner() {
   const disconnected = useSyncExternalStore(

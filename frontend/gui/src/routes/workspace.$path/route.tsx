@@ -7,10 +7,9 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { showMessage } from "@/components/common/genericDialog";
-
-import { subscribe } from "@/lib/event";
-import { type Task, listTask } from "@/lib/pixi/workspace/task";
+import { showMessage } from "shared/components/common/genericDialog";
+import { subscribe } from "shared/lib/event";
+import { type Task, listTask } from "shared/lib/pixi/workspace/task";
 import {
   type Environment,
   type Feature,
@@ -21,10 +20,11 @@ import {
   listEnvironments,
   listFeatures,
   listPlatforms,
-} from "@/lib/pixi/workspace/workspace";
-import { platform } from "@/lib/platform";
+} from "shared/lib/pixi/workspace/workspace";
+import { platform } from "shared/lib/platform";
+import { closeWorkspace, openWorkspace } from "shared/lib/session";
+
 import { addRecentWorkspace } from "@/lib/recentWorkspaces";
-import { closeWorkspace, openWorkspace } from "@/lib/session";
 
 export interface WorkspaceLoaderData {
   workspace: Workspace;

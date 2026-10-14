@@ -1,8 +1,8 @@
-import type { ConfirmRequest } from "@/lib/confirm";
-import type { OpenEditorError } from "@/lib/editor";
-import type { Notification } from "@/lib/notification";
-import { listen } from "@/lib/platform";
-import type { PtyDataEvent, PtyExitEvent, PtyStartEvent } from "@/lib/pty";
+import type { ConfirmRequest } from "#lib/confirm";
+import type { OpenEditorError } from "#lib/editor";
+import type { Notification } from "#lib/notification";
+import { listen } from "#lib/platform";
+import type { PtyDataEvent, PtyExitEvent, PtyStartEvent } from "#lib/pty";
 
 export interface EventMap {
   "pty-start": PtyStartEvent;

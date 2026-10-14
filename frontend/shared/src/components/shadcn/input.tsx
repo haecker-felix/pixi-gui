@@ -1,7 +1,7 @@
 import type * as React from "react";
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "#lib/utils";
 
 const baseInputClass =
   "w-full border rounded-2xl font-body text-pfxl-text transition duration-300 ease-out placeholder:text-pfxgsl-400 dark:text-pfxd-text dark:placeholder:text-pfxgsl-400 focus:outline-none focus:ring-0 border-pfxl-card-border bg-white hover:border-pfx-primary-alt focus:border-pfx-primary-alt dark:border-pfxd-card-border dark:bg-pfxgsd-700 dark:focus:border-pfx-primary-alt dark:hover:border-pfx-primary-alt";
