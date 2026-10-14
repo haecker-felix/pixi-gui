@@ -45,14 +45,18 @@ react-devtools = { cmd = "pnpm react-devtools", depends-on = [
   "frontend-install-deps",
 ], env = { HOST = "localhost" } }
 
-app = { cmd = "pnpm tauri dev", depends-on = ["frontend-install-deps"] }
+# Pixi GUI as desktop app
+pixi-gui = { cmd = "pnpm tauri dev", depends-on = ["frontend-install-deps"] }
 
-web = """concurrently --kill-others --names backend,frontend \
-  'pixi run web-backend' \
-  'pixi run web-frontend' \
+# Pixi GUI in the browser
+pixi-gui-web = """concurrently --kill-others --names backend,frontend \
+  'pixi run pixi-gui-web-backend' \
+  'pixi run pixi-gui-web-frontend' \
 """
-web-backend = """watchexec --socket 127.0.0.1:5174 --restart --watch src-server --watch src-server-macros --exts rs,toml -- cargo run -p pixi-gui-server --features server"""
-web-frontend = { cmd = "pnpm dev", depends-on = ["frontend-install-deps"] }
+pixi-gui-web-backend = """watchexec --socket 127.0.0.1:5174 --restart --watch crates --exts rs,toml -- cargo run -p pixi-gui-web"""
+pixi-gui-web-frontend = { cmd = "pnpm --filter gui dev", depends-on = [
+  "frontend-install-deps",
+] }
 
 #
 # Feature: Lint
@@ -75,7 +79,7 @@ pre-commit-install-minimal = "lefthook install pre-commit"
 
 # Backend
 backend-format = "cargo fmt --all"
-backend-lint = "cargo clippy --all-targets --workspace --all-features -- -D warnings"
+backend-lint = "cargo clippy --all-targets --workspace -- -D warnings"
 
 # Frontend
 frontend-format = { cmd = "pnpm exec prettier . --write" }
@@ -92,8 +96,8 @@ license-check = { cmd = "pnpm license-checker --onlyAllow 'Apache-2.0;BSD-3-Clau
 python-typecheck = "mypy ./scripts"
 ruff-format = "ruff format --exit-non-zero-on-format --force-exclude"
 ruff-lint = "ruff check --fix --exit-non-zero-on-fix --force-exclude"
-toml-format = { cmd = "taplo fmt *.toml src-server/*.toml src-server-macros/*.toml src-tauri/*.toml", env = { RUST_LOG = "warn" } }
-toml-lint = "taplo lint *.toml src-server/*.toml src-server-macros/*.toml src-tauri/*.toml --verbose"
+toml-format = { cmd = "taplo fmt *.toml crates/*/Cargo.toml", env = { RUST_LOG = "warn" } }
+toml-lint = "taplo lint *.toml crates/*/Cargo.toml --verbose"
 typos = "typos --force-exclude"
 
 # Combined
