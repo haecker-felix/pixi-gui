@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode, Ref } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "#lib/utils";
 
 interface RowProps {
   ref?: Ref<HTMLLIElement>;

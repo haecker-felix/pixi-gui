@@ -11,23 +11,27 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import { CommandPreview } from "@/components/pixi/process/commandPreview";
-import { Terminal } from "@/components/pixi/process/terminal";
-import { TaskArgumentsDialog } from "@/components/pixi/tasks/taskArgsDialog";
-import { TaskDialog } from "@/components/pixi/tasks/taskDialog";
-import { Badge } from "@/components/shadcn/badge";
-import { Button } from "@/components/shadcn/button";
-
-import { useProcess } from "@/hooks/useProcess";
-import type { Editor } from "@/lib/editor";
+import { Badge } from "shared/components/shadcn/badge";
+import { Button } from "shared/components/shadcn/button";
+import { useProcess } from "shared/hooks/useProcess";
+import type { Editor } from "shared/lib/editor";
 import {
   type Task,
   taskArguments as getTaskArguments,
   command as getTaskCommand,
   dependsOn as getTaskDependencies,
   description as getTaskDescription,
-} from "@/lib/pixi/workspace/task";
-import { type Feature, featureByTask } from "@/lib/pixi/workspace/workspace";
+} from "shared/lib/pixi/workspace/task";
+import {
+  type Feature,
+  featureByTask,
+} from "shared/lib/pixi/workspace/workspace";
+
+import { CommandPreview } from "@/components/process/commandPreview";
+import { Terminal } from "@/components/process/terminal";
+import { TaskArgumentsDialog } from "@/components/tasks/taskArgsDialog";
+import { TaskDialog } from "@/components/tasks/taskDialog";
+
 import {
   type TaskArgumentValues,
   canRunDirectly,

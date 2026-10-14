@@ -1,5 +1,5 @@
-import type { TaskArgument } from "@/lib/pixi/workspace/task";
-import { createStore } from "@/lib/settings";
+import type { TaskArgument } from "shared/lib/pixi/workspace/task";
+import { createStore } from "shared/lib/settings";
 
 export type TaskArgumentValues =
   | { values: Record<string, string> } // Argument name + Argument value

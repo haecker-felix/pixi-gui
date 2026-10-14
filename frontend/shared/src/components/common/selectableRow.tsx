@@ -1,8 +1,8 @@
 import { CheckIcon, CircleMinusIcon, CirclePlusIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { Row } from "@/components/common/row";
-import { Button } from "@/components/shadcn/button";
+import { Row } from "#components/common/row";
+import { Button } from "#components/shadcn/button";
 
 interface SelectableRowProps {
   title: string;

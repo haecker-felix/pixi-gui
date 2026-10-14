@@ -1,4 +1,4 @@
-import { invoke } from "@/lib/platform";
+import { invoke } from "#lib/platform";
 
 export interface Store {
   get<T>(key: string): Promise<T | undefined>;

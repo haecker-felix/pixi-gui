@@ -7,8 +7,8 @@ import {
   sendNotification,
 } from "@tauri-apps/plugin-notification";
 
-import type { Platform } from "@/lib/platform";
-import * as tauriIpc from "@/lib/platform/tauri/tauri_ipc";
+import type { Platform } from "#lib/platform";
+import * as tauriIpc from "#lib/platform/tauri/tauri_ipc";
 
 export const tauriPlatform: Platform = {
   invoke: tauriIpc.invoke,

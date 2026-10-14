@@ -23,11 +23,10 @@ export default defineConfig([
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   tseslint.configs.recommended,
-  // Tauri APIs are only used behind `@/lib/platform`,
-  // so the frontend also works in a browser
+  // Tauri APIs are only used behind `shared/lib/platform`
   {
-    files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/lib/platform/tauri/**"],
+    files: ["frontend/*/src/**/*.{ts,tsx}"],
+    ignores: ["frontend/shared/src/lib/platform/tauri/**"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -35,6 +34,22 @@ export default defineConfig([
           patterns: [
             {
               group: ["@tauri-apps/*"],
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Shared code doesn't depend on the code of an app
+  {
+    files: ["frontend/shared/src/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/*"],
             },
           ],
         },

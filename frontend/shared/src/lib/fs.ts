@@ -1,4 +1,4 @@
-import { invoke } from "@/lib/platform";
+import { invoke } from "#lib/platform";
 
 // Filesystem of the machine the backend runs on
 

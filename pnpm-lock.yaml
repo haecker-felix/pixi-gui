@@ -214,6 +214,14 @@ importers:
         specifier: ^7.3.6
         version: 7.3.6(@types/node@24.19.0)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.21.0)
 
+  frontend/gui:
+    dependencies:
+      shared:
+        specifier: workspace:*
+        version: link:../shared
+
+  frontend/shared: {}
+
 packages:
 
   '@acemir/cssom@0.9.31':

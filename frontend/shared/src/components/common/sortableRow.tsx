@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { Row } from "@/components/common/row";
+import { Row } from "#components/common/row";
 
 interface SortableRowProps {
   id: string;

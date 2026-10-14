@@ -8,18 +8,18 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { AboutDialog } from "@/components/common/aboutDialog";
-import { Button } from "@/components/shadcn/button";
+import { AboutDialog } from "#components/common/aboutDialog";
+import { Button } from "#components/shadcn/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/shadcn/dropdown-menu";
+} from "#components/shadcn/dropdown-menu";
 
-import { platform } from "@/lib/platform";
-import { openExternal } from "@/lib/utils";
+import { platform } from "#lib/platform";
+import { openExternal } from "#lib/utils";
 
 interface AppMenuProps {
   showChangeWorkspace?: boolean;

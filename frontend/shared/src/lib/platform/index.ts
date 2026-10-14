@@ -1,5 +1,5 @@
-import { tauriPlatform } from "@/lib/platform/tauri";
-import { webPlatform } from "@/lib/platform/web";
+import { tauriPlatform } from "#lib/platform/tauri";
+import { webPlatform } from "#lib/platform/web";
 
 // The only place that knows which platform the frontend runs on (tauri app or web), and how it talks to the backend there
 

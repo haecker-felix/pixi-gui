@@ -2,14 +2,18 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { AppMenu } from "@/components/common/appMenu";
-import { PreferencesGroup } from "@/components/common/preferencesGroup";
-import { Row } from "@/components/common/row";
-import { NewWorkspaceDialog } from "@/components/pixi/newWorkspaceDialog";
-import { Button } from "@/components/shadcn/button";
+import { AppMenu } from "shared/components/common/appMenu";
+import { PreferencesGroup } from "shared/components/common/preferencesGroup";
+import { Row } from "shared/components/common/row";
+import { Button } from "shared/components/shadcn/button";
+import {
+  type Workspace,
+  getWorkspace,
+} from "shared/lib/pixi/workspace/workspace";
+import { platform } from "shared/lib/platform";
 
-import { type Workspace, getWorkspace } from "@/lib/pixi/workspace/workspace";
-import { platform } from "@/lib/platform";
+import { NewWorkspaceDialog } from "@/components/newWorkspaceDialog";
+
 import {
   type RecentWorkspaceEntry,
   listRecentWorkspaces,

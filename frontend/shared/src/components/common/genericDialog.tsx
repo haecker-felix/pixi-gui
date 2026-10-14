@@ -1,6 +1,6 @@
 import { type FormEvent, useState, useSyncExternalStore } from "react";
 
-import { Button } from "@/components/shadcn/button";
+import { Button } from "#components/shadcn/button";
 import {
   Dialog,
   DialogContent,
@@ -8,8 +8,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/shadcn/dialog";
-import { Input } from "@/components/shadcn/input";
+} from "#components/shadcn/dialog";
+import { Input } from "#components/shadcn/input";
 
 /** Shows a message with an "OK" button. */
 export function showMessage(title: string, message: string): Promise<void> {

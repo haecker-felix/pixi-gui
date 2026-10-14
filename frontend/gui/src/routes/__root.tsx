@@ -4,13 +4,12 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-import { ConnectionBanner } from "@/components/common/connectionBanner";
-import { showConfirm } from "@/components/common/genericDialog";
-
-import { answerConfirm } from "@/lib/confirm";
-import { subscribe } from "@/lib/event";
-import "@/styles/fonts.css";
-import "@/styles/globals.css";
+import { ConnectionBanner } from "shared/components/common/connectionBanner";
+import { showConfirm } from "shared/components/common/genericDialog";
+import { answerConfirm } from "shared/lib/confirm";
+import { subscribe } from "shared/lib/event";
+import "shared/styles/fonts.css";
+import "shared/styles/globals.css";
 
 export const Route = createRootRoute({
   component: RootComponent,
