@@ -44,10 +44,16 @@ pixi global install --path .
 ### Running
 
 ```shell
-pixi run app
+pixi run pixi-gui
 ```
 
 This will install all frontend dependencies via pnpm and start the Tauri development server.
+
+To use Pixi GUI in the browser instead, run:
+
+```shell
+pixi run pixi-gui-web
+```
 
 ### Linting
 
