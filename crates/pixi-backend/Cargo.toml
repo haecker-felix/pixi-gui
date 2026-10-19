@@ -43,5 +43,4 @@ windows-sys = { workspace = true, features = [
 ] }
 
 [dev-dependencies]
-tempfile.workspace = true
 tokio-test.workspace = true

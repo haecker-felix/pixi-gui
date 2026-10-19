@@ -6241,7 +6241,6 @@ dependencies = [
  "serde_json",
  "strip-ansi-escapes",
  "strum",
- "tempfile",
  "tokio",
  "tokio-test",
  "which",
