@@ -6,3 +6,13 @@ pub struct AppInfo {
     /// Reverse domain name, e.g. "dev.prefix.pixi-gui"
     pub identifier: &'static str,
 }
+
+#[macro_export]
+macro_rules! app_info {
+    () => {
+        $crate::AppInfo {
+            name: env!("DISPLAY_NAME"),
+            identifier: concat!("dev.prefix.", env!("CARGO_PKG_NAME")),
+        }
+    };
+}

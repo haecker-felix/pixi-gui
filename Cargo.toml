@@ -27,6 +27,7 @@ tauri-plugin-notification = "~2.3"
 tauri-plugin-opener = "~2.5"
 tauri-plugin-single-instance = "2"
 tokio = "1.47"
+toml = "1"
 
 [patch.crates-io]
 # Redirect crates.io's `reqwest-middleware` to pixi's shim that re-exports

@@ -6267,6 +6267,7 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-notification",
  "tauri-plugin-opener",
+ "toml 1.1.6+spec-1.1.0",
 ]
 
 [[package]]
@@ -6275,6 +6276,7 @@ version = "0.1.0"
 dependencies = [
  "memory-serve",
  "pixi-platform-web",
+ "toml 1.1.6+spec-1.1.0",
 ]
 
 [[package]]

@@ -1,11 +1,16 @@
 [package]
+description = "Graphical user interface for Pixi"
 edition.workspace = true
 name = "pixi-gui"
 publish = false
 version.workspace = true
 
+[package.metadata]
+display-name = "Pixi GUI"
+
 [build-dependencies]
 tauri-build.workspace = true
+toml.workspace = true
 
 [dependencies]
 percent-encoding = "2"

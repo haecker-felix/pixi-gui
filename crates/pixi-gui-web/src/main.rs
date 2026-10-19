@@ -1,13 +1,8 @@
-use pixi_platform_web::{AppInfo, Config};
-
-const APP_INFO: AppInfo = AppInfo {
-    name: "Pixi GUI Web",
-    identifier: "dev.prefix.pixi-gui",
-};
+use pixi_platform_web::{Config, app_info};
 
 fn main() {
     pixi_platform_web::run(Config {
-        app: APP_INFO,
+        app: app_info!(),
         port: 5174,
         dev_server_port: 5173,
         #[cfg(debug_assertions)]

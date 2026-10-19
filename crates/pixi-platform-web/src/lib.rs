@@ -23,7 +23,7 @@ use tokio::net::TcpListener;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-pub use pixi_backend::AppInfo;
+pub use pixi_backend::{AppInfo, app_info};
 
 pub struct Config {
     pub app: AppInfo,

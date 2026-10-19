@@ -10,7 +10,7 @@ use pixi_backend::{SessionId, State, dispatch};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 
-pub use pixi_backend::AppInfo;
+pub use pixi_backend::{AppInfo, app_info};
 
 pub struct Config {
     pub app: AppInfo,

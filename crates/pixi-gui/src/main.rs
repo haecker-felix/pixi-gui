@@ -10,18 +10,13 @@ static STACK_SIZE: [u8; 23] = *b" /STACK:8388608,8388608";
 use std::path::Path;
 
 use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
-use pixi_platform_tauri::{AppInfo, Config, window};
+use pixi_platform_tauri::{Config, app_info, window};
 use tauri::AppHandle;
-
-const APP_INFO: AppInfo = AppInfo {
-    name: "Pixi GUI",
-    identifier: "dev.prefix.pixi-gui",
-};
 
 fn main() {
     pixi_platform_tauri::run(
         Config {
-            app: APP_INFO,
+            app: app_info!(),
             open_path: Some(open_workspace),
         },
         tauri::generate_context!(),
