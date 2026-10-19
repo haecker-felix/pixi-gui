@@ -1,7 +1,7 @@
 //! Uses the same location and format as previously used `tauri-plugin-store` plugin:
 //! `<data dir>/dev.prefix.pixi-gui/<store>` containing a `{key: value}` JSON object.
 
-use std::fs;
+use std::fs::{self, File};
 use std::io::ErrorKind;
 use std::path::PathBuf;
 
@@ -20,11 +20,22 @@ pub fn settings_get(store: String, key: String) -> Result<Option<Value>, Error> 
 #[command]
 pub fn settings_set(store: String, key: String, value: Value) -> Result<(), Error> {
     let path = store_path(&store)?;
+    fs::create_dir_all(path.parent().unwrap()).into_diagnostic()?;
+
+    let lock = File::create(path.with_added_extension("lock")).into_diagnostic()?;
+    lock.lock().into_diagnostic()?;
+
     let mut values = read_store(&path)?;
     values.insert(key, value);
 
-    fs::create_dir_all(path.parent().unwrap()).into_diagnostic()?;
-    fs::write(&path, serde_json::to_vec_pretty(&values).into_diagnostic()?).into_diagnostic()?;
+    // Replace the store atomically, so readers never see a truncated or partially written file
+    let tmp_path = path.with_added_extension("tmp");
+    fs::write(
+        &tmp_path,
+        serde_json::to_vec_pretty(&values).into_diagnostic()?,
+    )
+    .into_diagnostic()?;
+    fs::rename(&tmp_path, &path).into_diagnostic()?;
 
     Ok(())
 }
