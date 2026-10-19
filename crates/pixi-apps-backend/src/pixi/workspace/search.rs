@@ -12,7 +12,7 @@ use pixi_api::{
         MatchSpec, ParseStrictness, ParseStrictnessWithNameMatcher, Platform, RepoDataRecord,
     },
 };
-use pixi_backend_macros::command;
+use pixi_apps_backend_macros::command;
 
 #[command]
 pub async fn search_wildcard(

@@ -1,6 +1,6 @@
 [package]
 edition.workspace = true
-name = "pixi-platform-tauri"
+name = "pixi-apps-platform-tauri"
 publish = false
 version.workspace = true
 
@@ -8,7 +8,7 @@ version.workspace = true
 clap.workspace = true
 log.workspace = true
 percent-encoding.workspace = true
-pixi-backend.workspace = true
+pixi-apps-backend.workspace = true
 serde_json.workspace = true
 tauri.workspace = true
 tauri-plugin-dialog.workspace = true

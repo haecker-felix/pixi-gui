@@ -10,7 +10,7 @@ display-name = "Pixi GUI Web"
 
 [dependencies]
 memory-serve.workspace = true
-pixi-platform-web.workspace = true
+pixi-apps-platform-web.workspace = true
 
 [build-dependencies]
 # Embeds the frontend, see build.rs

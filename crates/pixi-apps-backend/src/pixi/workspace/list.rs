@@ -9,7 +9,7 @@ use pixi_api::{
     core::environment::LockFileUsage, manifest::PixiPlatformName, rattler_conda_types::Platform,
     workspace::Package,
 };
-use pixi_backend_macros::command;
+use pixi_apps_backend_macros::command;
 
 #[command]
 #[allow(clippy::too_many_arguments)]

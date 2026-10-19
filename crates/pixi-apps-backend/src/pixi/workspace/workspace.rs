@@ -12,7 +12,7 @@ use pixi_api::pypi_spec::{PixiPypiSpec, PypiPackageName};
 use pixi_api::rattler_conda_types::{NamedChannelOrUrl, PackageName, Platform};
 use pixi_api::spec::PixiSpec;
 use pixi_api::workspace::ChannelOptions;
-use pixi_backend_macros::command;
+use pixi_apps_backend_macros::command;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Error;

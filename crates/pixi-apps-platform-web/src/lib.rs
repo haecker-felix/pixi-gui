@@ -15,16 +15,16 @@ use clap::Parser;
 use listenfd::ListenFd;
 use log::info;
 use memory_serve::MemoryServe;
-use pixi_backend::app::{PathArg, path_route};
-use pixi_backend::event::Event;
-use pixi_backend::{SessionId, State, dispatch};
+use pixi_apps_backend::app::{PathArg, path_route};
+use pixi_apps_backend::event::Event;
+use pixi_apps_backend::{SessionId, State, dispatch};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::net::TcpListener;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-pub use pixi_backend::{AppInfo, app_info};
+pub use pixi_apps_backend::{AppInfo, app_info};
 
 pub struct Config {
     pub app: AppInfo,

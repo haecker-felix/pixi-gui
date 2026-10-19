@@ -9,7 +9,7 @@ use pixi_api::pep508::Requirement;
 use pixi_api::pypi_spec::PypiPackageName;
 use pixi_api::rattler_conda_types::{MatchSpec, PackageName};
 use pixi_api::workspace::DependencyOptions;
-use pixi_backend_macros::command;
+use pixi_apps_backend_macros::command;
 
 use crate::error::Error;
 use crate::session::Session;

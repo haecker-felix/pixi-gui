@@ -6,12 +6,12 @@ pub mod window;
 use std::path::Path;
 
 use clap::Parser;
-use pixi_backend::app::{PathArg, path_route};
-use pixi_backend::{SessionId, State, dispatch};
+use pixi_apps_backend::app::{PathArg, path_route};
+use pixi_apps_backend::{SessionId, State, dispatch};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 
-pub use pixi_backend::{AppInfo, app_info};
+pub use pixi_apps_backend::{AppInfo, app_info};
 
 pub struct Config {
     pub app: AppInfo,

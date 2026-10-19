@@ -1,4 +1,4 @@
-use pixi_backend_macros::command;
+use pixi_apps_backend_macros::command;
 
 use crate::session::Session;
 

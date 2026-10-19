@@ -6,7 +6,7 @@ use crate::{
     utils::{self, spawn_local},
 };
 use pixi_api::{core::environment::LockFileUsage, workspace::ReinstallOptions};
-use pixi_backend_macros::command;
+use pixi_apps_backend_macros::command;
 
 #[command]
 pub async fn reinstall(

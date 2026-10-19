@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
-name = "pixi-backend-macros"
+name = "pixi-apps-backend-macros"
 publish = false
 version.workspace = true
 
 [lib]
-name = "pixi_backend_macros"
+name = "pixi_apps_backend_macros"
 proc-macro = true
 
 [dependencies]

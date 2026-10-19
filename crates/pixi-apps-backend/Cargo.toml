@@ -1,6 +1,6 @@
 [package]
 edition.workspace = true
-name = "pixi-backend"
+name = "pixi-apps-backend"
 publish = false
 version.workspace = true
 
@@ -18,7 +18,7 @@ nix.workspace = true
 notify.workspace = true
 notify-debouncer-full.workspace = true
 percent-encoding.workspace = true
-pixi-backend-macros.workspace = true
+pixi-apps-backend-macros.workspace = true
 pixi_api.workspace = true
 portable-pty.workspace = true
 serde.workspace = true

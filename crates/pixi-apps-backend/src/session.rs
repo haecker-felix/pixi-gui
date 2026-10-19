@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex as SyncMutex};
 use log::debug;
 use miette::Result;
 use pixi_api::Interface;
-use pixi_backend_macros::command;
+use pixi_apps_backend_macros::command;
 use tokio::sync::{Mutex, mpsc, oneshot};
 
 use crate::app::AppInfo;

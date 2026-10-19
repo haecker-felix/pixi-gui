@@ -7,10 +7,10 @@
 #[used]
 static STACK_SIZE: [u8; 23] = *b" /STACK:8388608,8388608";
 
-use pixi_platform_tauri::{Config, app_info};
+use pixi_apps_platform_tauri::{Config, app_info};
 
 fn main() {
-    pixi_platform_tauri::run(
+    pixi_apps_platform_tauri::run(
         Config {
             app: app_info!(),
             open_path: "/workspace/",

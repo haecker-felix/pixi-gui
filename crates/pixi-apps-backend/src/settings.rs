@@ -6,7 +6,7 @@ use std::io::ErrorKind;
 use std::path::PathBuf;
 
 use miette::{IntoDiagnostic, miette};
-use pixi_backend_macros::command;
+use pixi_apps_backend_macros::command;
 use serde_json::{Map, Value};
 
 use crate::error::Error;

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use pixi_backend_macros::generate_handler;
+use pixi_apps_backend_macros::generate_handler;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
 

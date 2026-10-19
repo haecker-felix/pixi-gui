@@ -1,6 +1,6 @@
 use log::info;
 use percent_encoding::percent_decode_str;
-use pixi_backend::State;
+use pixi_apps_backend::State;
 use tauri::{AppHandle, Manager, Runtime, WebviewWindowBuilder};
 use uuid::Uuid;
 
