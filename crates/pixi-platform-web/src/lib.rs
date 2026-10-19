@@ -15,6 +15,7 @@ use clap::Parser;
 use listenfd::ListenFd;
 use log::info;
 use memory_serve::MemoryServe;
+use pixi_backend::app::{PathArg, path_route};
 use pixi_backend::event::Event;
 use pixi_backend::{SessionId, State, dispatch};
 use serde::{Deserialize, Serialize};
@@ -27,6 +28,8 @@ pub use pixi_backend::{AppInfo, app_info};
 
 pub struct Config {
     pub app: AppInfo,
+    pub open_path: &'static str,
+
     /// Port to listen on, unless set on the command line
     pub port: u16,
     /// Port of the Vite dev server, which serves the frontend in debug builds
@@ -36,8 +39,9 @@ pub struct Config {
 }
 
 #[derive(Parser)]
-#[command(version)]
 struct Cli {
+    #[command(flatten)]
+    path: PathArg,
     /// Port to listen on, on localhost
     #[arg(long)]
     port: Option<u16>,
@@ -45,11 +49,16 @@ struct Cli {
 
 pub fn run(config: Config) {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-    let cli = Cli::parse();
+    let cli: Cli = config.app.parse();
     let port = cli.port.unwrap_or(config.port);
 
+    let route = match cli.path.absolute(None) {
+        Some(path) => path_route(config.open_path, &path),
+        None => "/".to_string(),
+    };
+
     let runtime = tokio::runtime::Runtime::new().expect("Failed to start the tokio runtime");
-    if let Err(err) = runtime.block_on(Server::start(config, port)) {
+    if let Err(err) = runtime.block_on(Server::start(config, port, route)) {
         eprintln!("Failed to serve on port {port}: {err}");
         std::process::exit(1);
     }
@@ -84,7 +93,7 @@ struct Server {
 }
 
 impl Server {
-    async fn start(config: Config, port: u16) -> io::Result<()> {
+    async fn start(config: Config, port: u16, route: String) -> io::Result<()> {
         let listener = match ListenFd::from_env().take_tcp_listener(0)? {
             Some(listener) => {
                 listener.set_nonblocking(true)?;
@@ -126,11 +135,12 @@ impl Server {
         };
 
         let app = app.with_state(server);
+        let url = format!("http://localhost:{port}{route}");
 
         println!();
         println!("{} is running. Open in your browser:", config.app.name);
         println!();
-        println!("    http://localhost:{port}");
+        println!("    {url}");
         println!();
         println!("On another machine, forward the port first:");
         println!();
@@ -139,7 +149,7 @@ impl Server {
 
         // Not during development, where the server restarts on every change
         if cfg!(not(debug_assertions)) {
-            let _ = open::that_detached(format!("http://localhost:{port}"));
+            let _ = open::that_detached(url);
         }
 
         axum::serve(listener, app).await

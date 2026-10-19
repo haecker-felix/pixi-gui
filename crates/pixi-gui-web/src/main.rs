@@ -9,5 +9,6 @@ fn main() {
         assets: None,
         #[cfg(not(debug_assertions))]
         assets: Some(memory_serve::load!()),
+        open_path: "/workspace/",
     });
 }

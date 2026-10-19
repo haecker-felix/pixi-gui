@@ -5,7 +5,9 @@ publish = false
 version.workspace = true
 
 [dependencies]
+clap.workspace = true
 dirs = "6"
+dunce = "1.0"
 humantime = "2.3.0"
 indexmap = "2"
 libc = "0.2"
@@ -15,6 +17,7 @@ miette = "7"
 nix = "0.31.3"
 notify = "8"
 notify-debouncer-full = "0.7"
+percent-encoding = "2"
 pixi-backend-macros.workspace = true
 pixi_api.workspace = true
 portable-pty = "0.9"

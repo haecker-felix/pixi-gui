@@ -13,7 +13,6 @@ tauri-build.workspace = true
 toml.workspace = true
 
 [dependencies]
-percent-encoding = "2"
 pixi-platform-tauri.workspace = true
 tauri.workspace = true
 # Not used directly, but Tauri only grants the permissions of plugins the app depends on

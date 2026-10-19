@@ -3,9 +3,10 @@
 pub mod os;
 pub mod window;
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use clap::{CommandFactory, Parser};
+use clap::Parser;
+use pixi_backend::app::{PathArg, path_route};
 use pixi_backend::{SessionId, State, dispatch};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
@@ -14,39 +15,17 @@ pub use pixi_backend::{AppInfo, app_info};
 
 pub struct Config {
     pub app: AppInfo,
-    /// Opens a window for a path the app was launched with: on the command line, by a second
-    /// instance, or by a file association. Without it, the app doesn't take a path.
-    pub open_path: Option<fn(&AppHandle, &Path)>,
+    pub open_path: &'static str,
 }
 
 #[derive(Parser)]
-#[command(version = option_env!("PIXI_APPS_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))]
-#[command(about = env!("CARGO_PKG_DESCRIPTION"))]
 struct Cli {
-    /// Path to open
-    #[arg()]
-    path: Option<PathBuf>,
-
+    #[command(flatten)]
+    path: PathArg,
     #[cfg(not(debug_assertions))]
     /// Disables automatic app relaunch (detaches from terminal)
     #[arg(long)]
     no_relaunch: bool,
-}
-
-impl Cli {
-    fn absolute_path(&self, cwd: Option<&str>) -> Option<PathBuf> {
-        self.path.as_ref().map(|path| {
-            if path.is_absolute() {
-                path.clone()
-            } else {
-                let base = cwd
-                    .map(PathBuf::from)
-                    .or_else(|| std::env::current_dir().ok())
-                    .unwrap_or_else(|| PathBuf::from("."));
-                dunce::canonicalize(base.join(path)).unwrap_or_else(|_| path.clone())
-            }
-        })
-    }
 }
 
 pub fn run(config: Config, context: tauri::Context) {
@@ -57,17 +36,10 @@ pub fn run(config: Config, context: tauri::Context) {
         std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     }
 
-    let cli = Cli::parse();
-    if cli.path.is_some() && config.open_path.is_none() {
-        Cli::command()
-            .error(
-                clap::error::ErrorKind::UnknownArgument,
-                "This app doesn't open paths",
-            )
-            .exit();
-    }
+    let cli: Cli = config.app.parse();
     let path = cli
-        .absolute_path(None)
+        .path
+        .absolute(None)
         .map(|p| p.to_string_lossy().to_string());
 
     // Relaunch as detached process when started from terminal (like VSCode does)
@@ -89,9 +61,9 @@ pub fn run(config: Config, context: tauri::Context) {
         }
     }
 
-    let open = move |app: &AppHandle, path: Option<&Path>| match (path, config.open_path) {
-        (Some(path), Some(open_path)) => open_path(app, path),
-        _ => window::create_default_window(app),
+    let open = move |app: &AppHandle, path: Option<&Path>| match path {
+        Some(path) => window::ensure_window(app, &path_route(config.open_path, path)),
+        None => window::create_default_window(app),
     };
 
     let app = tauri::Builder::default();
@@ -102,7 +74,7 @@ pub fn run(config: Config, context: tauri::Context) {
             return;
         };
 
-        open(app, cli.absolute_path(Some(&cwd)).as_deref());
+        open(app, cli.path.absolute(Some(Path::new(&cwd))).as_deref());
     }))
     .plugin(
         tauri_plugin_log::Builder::new()

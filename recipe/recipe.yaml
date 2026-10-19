@@ -19,6 +19,7 @@ build:
       # identical between builds so cached build output stays valid. Doesn't affect
       # the package version.
       PKG_VERSION: "0"
+      PIXI_APPS_VERSION: ${{ version }}
     content:
       - |
         crate_dir="crates/${PKG_NAME}"

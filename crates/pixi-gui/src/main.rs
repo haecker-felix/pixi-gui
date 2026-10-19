@@ -7,32 +7,14 @@
 #[used]
 static STACK_SIZE: [u8; 23] = *b" /STACK:8388608,8388608";
 
-use std::path::Path;
-
-use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
-use pixi_platform_tauri::{Config, app_info, window};
-use tauri::AppHandle;
+use pixi_platform_tauri::{Config, app_info};
 
 fn main() {
     pixi_platform_tauri::run(
         Config {
             app: app_info!(),
-            open_path: Some(open_workspace),
+            open_path: "/workspace/",
         },
         tauri::generate_context!(),
     );
-}
-
-fn open_workspace(app: &AppHandle, path: &Path) {
-    // If a file is passed (e.g., pixi.toml), use its parent directory
-    let workspace = if path.is_file() {
-        path.parent().unwrap_or(path)
-    } else {
-        path
-    };
-
-    let path = workspace.to_string_lossy();
-    let path = path.trim_end_matches('/');
-    let encoded = utf8_percent_encode(path, NON_ALPHANUMERIC);
-    window::ensure_window(app, &format!("/workspace/{encoded}"));
 }
