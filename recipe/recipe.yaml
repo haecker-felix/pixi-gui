@@ -1,9 +1,10 @@
 context:
-  name: pixi-gui
-  version: "${{ env.get('PIXI_GUI_VERSION', default='0.1.0dev') }}"
+  version: "${{ env.get('PIXI_APPS_VERSION', default='0.1.0dev') }}"
+  exe_suffix: ${{ ".exe" if win else "" }}
+  icon_ext: ${{ "icns" if osx else ("ico" if win else "png") }}
 
-package:
-  name: ${{ name }}
+recipe:
+  name: pixi-apps
   version: ${{ version }}
 
 source:
@@ -12,84 +13,105 @@ source:
 build:
   number: 0
   script:
+    interpreter: brush
     env:
       # Keep compiler flags (e.g. CFLAGS -fdebug-prefix-map=…/$PKG_NAME-$PKG_VERSION)
       # identical between builds so cached build output stays valid. Doesn't affect
       # the package version.
       PKG_VERSION: "0"
+      PIXI_APPS_VERSION: ${{ version }}
     content:
+      - |
+        crate_dir="crates/${PKG_NAME}"
+        unset CI
+        export CARGO_TARGET_DIR="${SRC_DIR}/../../target-cache"
+      # Required to fix "path too long" issues on CI. GITHUB_ACTIONS is read at
+      # recipe render time, so this applies under the default strict environment
+      # isolation where the variable is not forwarded to the build script.
+      - if: win and env.get("GITHUB_ACTIONS", default="")
+        then: |
+          export CARGO_HOME="C:\\cargo-home"
+          mkdir -p "${CARGO_HOME}"
+      # WebKit framework linking for macOS, see https://crates.io/crates/wry/0.37.0
       - if: osx
-        then:
-          # WebKit framework linking for macOS, see https://crates.io/crates/wry/0.37.0
-          - export RUSTFLAGS="-l framework=WebKit"
-      - if: unix
-        then:
-          - unset CI
-          - TARGET=${TARGET:-$(rustc -vV | grep "host:" | awk '{print $2}')}
-          - export CARGO_TARGET_DIR=${{ SRC_DIR }}/../../target-cache
-          - pnpm install
-          - pnpm run tauri build --no-bundle
-          - mkdir -p ${{ PREFIX }}/bin
-          - install -m0755 "$CARGO_TARGET_DIR/$TARGET/release/pixi-gui" "${{ PREFIX }}/bin"
-          - cd ${{ SRC_DIR }}/src-tauri && cargo-bundle-licenses --format yaml --output ../THIRDPARTY.yml
+        then: |
+          export RUSTFLAGS="-l framework=WebKit"
 
-          # menuinst
-          - mkdir -p "${{ PREFIX }}/Menu"
-          - if: osx
-            then:
-              - sed "s/__PKG_VERSION__/${{ version }}/g" "${{ RECIPE_DIR }}/menu.json" > "${{ PREFIX }}/Menu/${{ PKG_NAME }}_menu.json"
-              - install -m0644 "${{ SRC_DIR }}/src-tauri/icons/icon.icns" "${{ PREFIX }}/Menu/icon.icns"
-          - if: linux
-            then:
-              - install -m0644 "${{ RECIPE_DIR }}/menu.json" "${{ PREFIX }}/Menu/${{ PKG_NAME }}_menu.json"
-              - install -m0644 "${{ SRC_DIR }}/src-tauri/icons/icon.png" "${{ PREFIX }}/Menu/icon.png"
-      - if: win
-        then:
-          # Required to fix "path too long" issues on CI. GITHUB_ACTIONS is read
-          # at recipe render time, so this applies under the default strict
-          # environment isolation where the variable is not forwarded to the
-          # build script.
-          - if: env.get("GITHUB_ACTIONS", default="")
-            then:
-              - if not exist C:\\cargo-home mkdir C:\\cargo-home
-              - set CARGO_HOME=C:\\cargo-home
+      - |
+        pnpm install
+        if [[ -f "${crate_dir}/tauri.conf.json" ]]; then
+          # Desktop app. Tells the Tauri CLI which app to build.
+          export TAURI_APP_PATH="${crate_dir}"
+          pnpm run tauri build --no-bundle
+          menu_template=tauri
+        else
+          # Server, which embeds its frontend, so that has to be built first
+          pnpm --recursive build
+          cargo build --release -p "${PKG_NAME}"
+          menu_template=web
+        fi
 
-          - set CI=
-          - set CARGO_TARGET_DIR=%SRC_DIR%\..\..\target-cache
-          - cmd /c "pnpm install"
-          - cmd /c "pnpm run tauri build --no-bundle"
-          - cmd /c "if not exist %PREFIX%\bin\ mkdir %PREFIX%\bin\"
-          # The conda-forge rust compiler activates with CARGO_BUILD_TARGET
-          # set, so cargo nests its output under the target triple.
-          - copy /Y %CARGO_TARGET_DIR%\%CARGO_BUILD_TARGET%\release\pixi-gui.exe %PREFIX%\bin
-          - cd %SRC_DIR%\src-tauri && cargo-bundle-licenses --format yaml --output ../THIRDPARTY.yml
+        # The conda-forge rust compiler activates with CARGO_BUILD_TARGET set,
+        # so cargo nests its output under the target triple
+        mkdir -p "${PREFIX}/bin"
+        cp "${CARGO_TARGET_DIR}/${CARGO_BUILD_TARGET}/release/${PKG_NAME}${{ exe_suffix }}" "${PREFIX}/bin/"
 
-          # menuinst
-          - mkdir "%PREFIX%\Menu"
-          - copy /Y "%RECIPE_DIR%\menu.json" "%PREFIX%\Menu\%PKG_NAME%_menu.json"
-          - copy /Y "%SRC_DIR%\src-tauri\icons\icon.ico" "%PREFIX%\Menu\icon.ico"
+        (cd "${crate_dir}" && cargo-bundle-licenses --format yaml --output "${SRC_DIR}/THIRDPARTY.yml")
 
-requirements:
-  build:
-    - ${{ compiler('rust') }}
-    - ${{ compiler('c') }}
-    - cargo-bundle-licenses
-    - nodejs
-    - pnpm
-    - if: linux
-      then:
-        - pkg-config
-        - make
-  host:
-    - if: linux
-      then:
-        - cairo
-        - expat
-        - fontconfig
-        - glib
-        - gtk3
-        - libsoup
-        - pango
-        - webkit2gtk4.1 >=2.48.5
-        - xorg-xorgproto
-        - zlib
+        # Menuinst
+        cargo_toml_field() {
+          local re="$1 = \"([^\"]*)\""
+          [[ $(<"${crate_dir}/Cargo.toml") =~ ${re} ]] && printf '%s' "${BASH_REMATCH[1]}"
+        }
+        description=$(cargo_toml_field description)
+        display_name=$(cargo_toml_field display-name)
+
+        mkdir -p "${PREFIX}/Menu"
+        menu=$(<"${RECIPE_DIR}/menu/${menu_template}.json")
+        menu=${menu//__PKG_NAME__/${PKG_NAME}}
+        menu=${menu//__PKG_VERSION__/${{ version }}}
+        menu=${menu//__APP_ID__/dev.prefix.${PKG_NAME}}
+        menu=${menu//__DISPLAY_NAME__/${display_name}}
+        menu=${menu//__DESCRIPTION__/${description}}
+        printf '%s\n' "${menu}" > "${PREFIX}/Menu/${PKG_NAME}_menu.json"
+        cp "${crate_dir}/icons/icon.${{ icon_ext }}" "${PREFIX}/Menu/"
+
+outputs:
+  - package:
+      name: pixi-gui
+    requirements:
+      build:
+        - ${{ compiler('rust') }}
+        - ${{ compiler('c') }}
+        - brush
+        - cargo-bundle-licenses
+        - nodejs
+        - pnpm
+        - if: linux
+          then:
+            - pkg-config
+            - make
+      host:
+        - if: linux
+          then:
+            - cairo
+            - expat
+            - fontconfig
+            - glib
+            - gtk3
+            - libsoup
+            - pango
+            - webkit2gtk4.1 >=2.48.5
+            - xorg-xorgproto
+            - zlib
+
+  - package:
+      name: pixi-gui-web
+    requirements:
+      build:
+        - ${{ compiler('rust') }}
+        - ${{ compiler('c') }}
+        - brush
+        - cargo-bundle-licenses
+        - nodejs
+        - pnpm

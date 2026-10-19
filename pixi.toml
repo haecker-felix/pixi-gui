@@ -2,7 +2,7 @@
 authors = ["Felix Häcker <felix@prefix.dev>"]
 channels = ["https://prefix.dev/conda-forge"]
 description = "Package Management Made Easy!"
-name = "pixi-gui"
+name = "pixi-apps"
 platforms = [
   "osx-arm64",
   { platform = "linux-64", glibc = "2.34" },
@@ -45,14 +45,19 @@ react-devtools = { cmd = "pnpm react-devtools", depends-on = [
   "frontend-install-deps",
 ], env = { HOST = "localhost" } }
 
-app = { cmd = "pnpm tauri dev", depends-on = ["frontend-install-deps"] }
+[tasks.tauri]
+args = [{ arg = "app", choices = ["pixi-gui"] }]
+cmd = "pnpm tauri dev"
+depends-on = ["frontend-install-deps"]
+env = { TAURI_APP_PATH = "crates/{{ app }}" }
 
-web = """concurrently --kill-others --names backend,frontend \
-  'pixi run web-backend' \
-  'pixi run web-frontend' \
+[tasks.web]
+args = [{ arg = "app", choices = ["pixi-gui"] }]
+cmd = """concurrently --kill-others --names backend,frontend \
+  'watchexec --socket 127.0.0.1:5174 --restart --watch crates --exts rs,toml -- cargo run -p {{ app }}-web' \
+  'pnpm --filter {{ app }} dev' \
 """
-web-backend = """watchexec --socket 127.0.0.1:5174 --restart --watch src-server --watch src-server-macros --exts rs,toml -- cargo run -p pixi-gui-server --features server"""
-web-frontend = { cmd = "pnpm dev", depends-on = ["frontend-install-deps"] }
+depends-on = ["frontend-install-deps"]
 
 #
 # Feature: Lint
@@ -75,7 +80,7 @@ pre-commit-install-minimal = "lefthook install pre-commit"
 
 # Backend
 backend-format = "cargo fmt --all"
-backend-lint = "cargo clippy --all-targets --workspace --all-features -- -D warnings"
+backend-lint = "cargo clippy --all-targets --workspace -- -D warnings"
 
 # Frontend
 frontend-format = { cmd = "pnpm exec prettier . --write" }
@@ -89,11 +94,11 @@ cargo-deny = "cargo deny check license --deny warnings"
 license-check = { cmd = "pnpm license-checker --onlyAllow 'Apache-2.0;BSD-3-Clause;MIT;ISC'", depends-on = [
   "frontend-install-deps",
 ] }
-python-typecheck = "mypy ./scripts"
+python-typecheck = "mypy --config-file scripts/mypy.ini ./scripts"
 ruff-format = "ruff format --exit-non-zero-on-format --force-exclude"
 ruff-lint = "ruff check --fix --exit-non-zero-on-fix --force-exclude"
-toml-format = { cmd = "taplo fmt *.toml src-server/*.toml src-server-macros/*.toml src-tauri/*.toml", env = { RUST_LOG = "warn" } }
-toml-lint = "taplo lint *.toml src-server/*.toml src-server-macros/*.toml src-tauri/*.toml --verbose"
+toml-format = { cmd = "taplo fmt *.toml crates/*/Cargo.toml", env = { RUST_LOG = "warn" } }
+toml-lint = "taplo lint *.toml crates/*/Cargo.toml --verbose"
 typos = "typos --force-exclude"
 
 # Combined
@@ -114,8 +119,8 @@ python = ">=3.14,<3.15"
 rattler-build = ">=0.68,<0.69"
 
 [feature.packaging.tasks]
-build-package = "python scripts/build_package.py"
-upload-package = "python scripts/upload_package.py"
+build-packages = "python scripts/build_packages.py"
+upload-packages = "python scripts/upload_packages.py"
 
 #
 # Feature: Automation

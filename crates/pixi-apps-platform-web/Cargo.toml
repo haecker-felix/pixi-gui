@@ -1,0 +1,24 @@
+[package]
+edition.workspace = true
+name = "pixi-apps-platform-web"
+publish = false
+version.workspace = true
+
+[dependencies]
+axum.workspace = true
+clap.workspace = true
+env_logger.workspace = true
+listenfd.workspace = true
+log.workspace = true
+memory-serve.workspace = true
+open.workspace = true
+pixi-apps-backend.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = [
+  "macros",
+  "net",
+  "rt-multi-thread",
+  "sync",
+] }
+uuid.workspace = true
