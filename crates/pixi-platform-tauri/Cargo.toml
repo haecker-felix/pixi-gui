@@ -7,7 +7,7 @@ version.workspace = true
 [dependencies]
 clap.workspace = true
 log.workspace = true
-percent-encoding = "2"
+percent-encoding.workspace = true
 pixi-backend.workspace = true
 serde_json.workspace = true
 tauri.workspace = true
@@ -16,7 +16,7 @@ tauri-plugin-log.workspace = true
 tauri-plugin-notification.workspace = true
 tauri-plugin-opener.workspace = true
 tauri-plugin-single-instance.workspace = true
-uuid = { version = "1.18", features = ["v4"] }
+uuid.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_System_Threading"] }
+windows-sys = { workspace = true, features = ["Win32_System_Threading"] }

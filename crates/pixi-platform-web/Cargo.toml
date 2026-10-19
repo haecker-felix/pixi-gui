@@ -5,13 +5,13 @@ publish = false
 version.workspace = true
 
 [dependencies]
-axum = { version = "0.8", features = ["ws"] }
+axum.workspace = true
 clap.workspace = true
-env_logger = "0.11"
-listenfd = "1"
+env_logger.workspace = true
+listenfd.workspace = true
 log.workspace = true
 memory-serve.workspace = true
-open = "5"
+open.workspace = true
 pixi-backend.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -21,4 +21,4 @@ tokio = { workspace = true, features = [
   "rt-multi-thread",
   "sync",
 ] }
-uuid = { version = "1", features = ["v4"] }
+uuid.workspace = true

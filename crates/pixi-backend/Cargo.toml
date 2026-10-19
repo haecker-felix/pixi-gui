@@ -6,25 +6,25 @@ version.workspace = true
 
 [dependencies]
 clap.workspace = true
-dirs = "6"
-dunce = "1.0"
-humantime = "2.3.0"
-indexmap = "2"
-libc = "0.2"
+dirs.workspace = true
+dunce.workspace = true
+humantime.workspace = true
+indexmap.workspace = true
+libc.workspace = true
 log.workspace = true
-memchr = "2.8.3"
-miette = "7"
-nix = "0.31.3"
-notify = "8"
-notify-debouncer-full = "0.7"
-percent-encoding = "2"
+memchr.workspace = true
+miette.workspace = true
+nix.workspace = true
+notify.workspace = true
+notify-debouncer-full.workspace = true
+percent-encoding.workspace = true
 pixi-backend-macros.workspace = true
 pixi_api.workspace = true
-portable-pty = "0.9"
+portable-pty.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-strip-ansi-escapes = "0.2"
-strum = { version = "0.28", features = ["derive"] }
+strip-ansi-escapes.workspace = true
+strum.workspace = true
 tokio = { workspace = true, features = [
   "io-util",
   "macros",
@@ -34,14 +34,14 @@ tokio = { workspace = true, features = [
   "sync",
   "time",
 ] }
-which = "8.0.0"
+which.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-sys = { version = "0.61", features = [
+windows-sys = { workspace = true, features = [
   "Win32_Foundation",
   "Win32_System_Threading",
 ] }
 
 [dev-dependencies]
-tempfile = "3"
-tokio-test = "0.4.5"
+tempfile.workspace = true
+tokio-test.workspace = true
