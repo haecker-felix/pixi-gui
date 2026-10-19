@@ -8,6 +8,10 @@ export async function getAppName(): Promise<string> {
   return invoke<string>("app_name");
 }
 
+export async function getAppDescription(): Promise<string> {
+  return invoke<string>("app_description");
+}
+
 export async function getAppVersion(): Promise<string> {
   return invoke<string>("app_version");
 }

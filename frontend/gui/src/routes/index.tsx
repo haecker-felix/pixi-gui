@@ -11,6 +11,7 @@ import {
   getWorkspace,
 } from "shared/lib/pixi/workspace/workspace";
 import { platform } from "shared/lib/platform";
+import { getAppName } from "shared/lib/version";
 
 import { NewWorkspaceDialog } from "@/components/newWorkspaceDialog";
 
@@ -55,6 +56,12 @@ function AppComponent() {
       entries.filter((entry) => entry.manifest !== manifest),
     );
   };
+
+  useEffect(() => {
+    getAppName().then((appName) => {
+      document.title = appName;
+    });
+  }, []);
 
   // Retrieve recent workspace manifests
   useEffect(() => {

@@ -23,6 +23,7 @@ import {
 } from "shared/lib/pixi/workspace/workspace";
 import { platform } from "shared/lib/platform";
 import { closeWorkspace, openWorkspace } from "shared/lib/session";
+import { getAppName } from "shared/lib/version";
 
 import { addRecentWorkspace } from "@/lib/recentWorkspaces";
 
@@ -74,11 +75,9 @@ function WorkspaceLayout() {
 
   // Set window title to workspace name
   useEffect(() => {
-    document.title = `${workspace.name} - Pixi GUI`;
-
-    return () => {
-      document.title = "Pixi GUI";
-    };
+    getAppName().then((appName) => {
+      document.title = `${workspace.name} - ${appName}`;
+    });
   }, [workspace.name]);
 
   // Auto refresh when manifest changes

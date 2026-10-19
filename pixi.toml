@@ -2,7 +2,7 @@
 authors = ["Felix Häcker <felix@prefix.dev>"]
 channels = ["https://prefix.dev/conda-forge"]
 description = "Package Management Made Easy!"
-name = "pixi-gui"
+name = "pixi-apps"
 platforms = [
   "osx-arm64",
   { platform = "linux-64", glibc = "2.34" },
@@ -119,8 +119,8 @@ python = ">=3.14,<3.15"
 rattler-build = ">=0.68,<0.69"
 
 [feature.packaging.tasks]
-build-package = "python scripts/build_package.py"
-upload-package = "python scripts/upload_package.py"
+build-packages = "python scripts/build_packages.py"
+upload-packages = "python scripts/upload_packages.py"
 
 #
 # Feature: Automation

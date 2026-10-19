@@ -66,20 +66,20 @@ jobs:
       - name: Resolve Rust version
         id: rust
         shell: bash
-        run: echo "version=$(pixi run --environment=packaging build-package --rust-version)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(pixi run --environment=packaging build-packages --rust-version)" >> "$GITHUB_OUTPUT"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: ". -> output/bld/target-cache"
           key: rust-${{ steps.rust.outputs.version }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build package
-        run: pixi run --environment=packaging build-package
+        run: pixi run --environment=packaging build-packages
         env:
           RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: true
           RATTLER_BUILD_COLOR: always
       - name: Upload package
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: pixi run --environment=packaging upload-package
+        run: pixi run --environment=packaging upload-packages
 
   build-intel-mac:
     if: github.ref == 'refs/heads/main'
@@ -93,16 +93,16 @@ jobs:
       - name: Resolve Rust version
         id: rust
         shell: bash
-        run: echo "version=$(pixi run --environment=packaging build-package --rust-version)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(pixi run --environment=packaging build-packages --rust-version)" >> "$GITHUB_OUTPUT"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: ". -> output/bld/target-cache"
           key: rust-${{ steps.rust.outputs.version }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build package
-        run: pixi run --environment=packaging build-package
+        run: pixi run --environment=packaging build-packages
         env:
           RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: true
           RATTLER_BUILD_COLOR: always
       - name: Upload package
-        run: pixi run --environment=packaging upload-package
+        run: pixi run --environment=packaging upload-packages

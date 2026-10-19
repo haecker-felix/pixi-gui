@@ -1,5 +1,5 @@
 context:
-  version: "${{ env.get('PIXI_GUI_VERSION', default='0.1.0dev') }}"
+  version: "${{ env.get('PIXI_APPS_VERSION', default='0.1.0dev') }}"
   exe_suffix: ${{ ".exe" if win else "" }}
   icon_ext: ${{ "icns" if osx else ("ico" if win else "png") }}
 

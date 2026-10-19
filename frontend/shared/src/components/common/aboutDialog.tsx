@@ -12,7 +12,12 @@ import {
 
 import paxton from "#assets/paxton.png";
 import { openExternal } from "#lib/utils";
-import { getAppName, getAppVersion, getPixiVersion } from "#lib/version";
+import {
+  getAppDescription,
+  getAppName,
+  getAppVersion,
+  getPixiVersion,
+} from "#lib/version";
 
 interface AboutDialogProps {
   open: boolean;
@@ -21,17 +26,20 @@ interface AboutDialogProps {
 
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   const [appName, setAppName] = useState<string>("");
+  const [appDescription, setAppDescription] = useState<string>("");
   const [appVersion, setAppVersion] = useState<string>("");
   const [pixiVersion, setPixiVersion] = useState<string>("");
 
   useEffect(() => {
     const loadAppInfo = async () => {
-      const [name, version, pixi] = await Promise.all([
+      const [name, description, version, pixi] = await Promise.all([
         getAppName(),
+        getAppDescription(),
         getAppVersion(),
         getPixiVersion(),
       ]);
       setAppName(name);
+      setAppDescription(description);
       setAppVersion(version);
       setPixiVersion(pixi);
     };
@@ -44,7 +52,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton className="max-h-[95vh] overflow-y-auto">
-        <DialogTitle className="sr-only">About Pixi GUI</DialogTitle>
+        <DialogTitle className="sr-only">About {appName}</DialogTitle>
         <DialogDescription className="sr-only">
           App version details
         </DialogDescription>
@@ -52,9 +60,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           <img src={paxton} alt="Paxton" className="h-32 mt-pfx-m" />
 
           <h2 className="font-display text-pfxh-s mt-pfx-ml">{appName}</h2>
-          <p className="mt-pfx-s">
-            A graphical interface for managing Pixi workspaces
-          </p>
+          <p className="mt-pfx-s">{appDescription}</p>
           <p className="text-pfxgsl-400 my-pfx-s">© prefix.dev GmbH</p>
 
           <div className="w-full space-y-pfx-s">

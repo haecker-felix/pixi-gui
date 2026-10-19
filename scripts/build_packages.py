@@ -42,16 +42,16 @@ def get_current_time() -> str:
 
 
 def build() -> None:
-    version = get_version_from_cargo()
+    cargo_version = get_version_from_cargo()
     timestamp = get_current_date()
     time = get_current_time()
     short_hash = get_git_short_hash()
-    pixi_gui_version = f"{version}.{timestamp}.{time}.{short_hash}"
+    version = f"{cargo_version}.{timestamp}.{time}.{short_hash}"
 
-    print(f"Building pixi-gui {pixi_gui_version}")
+    print(f"Building packages {version}")
 
     env = os.environ.copy()
-    env["PIXI_GUI_VERSION"] = pixi_gui_version
+    env["PIXI_APPS_VERSION"] = version
 
     subprocess.run(
         [*RATTLER_BUILD_ARGS, "--no-build-id"],

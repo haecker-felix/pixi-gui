@@ -20,7 +20,7 @@ pub struct Config {
 }
 
 #[derive(Parser)]
-#[command(version = option_env!("PIXI_GUI_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))]
+#[command(version = option_env!("PIXI_APPS_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))]
 #[command(about = env!("CARGO_PKG_DESCRIPTION"))]
 struct Cli {
     /// Path to open

@@ -96,7 +96,7 @@ export function DependencyVersionPicker({
   if (packageVersion.type === "non-editable") {
     return (
       <div className="py-pfx-s text-muted-foreground">
-        This dependency cannot be edited using Pixi GUI.
+        This dependency cannot be edited here.
       </div>
     );
   }

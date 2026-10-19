@@ -66,10 +66,10 @@ Runs all linters and formatters for both backend (`clippy`, `rustfmt`) and front
 ### Packaging
 
 ```shell
-pixi run build-package
+pixi run build-packages
 ```
 
-Builds a installable conda package using rattler-build.
+Builds the installable conda packages using rattler-build.
 
 ## Support
 

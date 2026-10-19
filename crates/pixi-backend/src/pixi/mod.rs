@@ -13,6 +13,10 @@ pub fn app_name(session: Session) -> &'static str {
     session.app().name
 }
 #[command]
-pub fn app_version() -> &'static str {
-    option_env!("PIXI_GUI_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))
+pub fn app_description(session: Session) -> &'static str {
+    session.app().description
+}
+#[command]
+pub fn app_version(session: Session) -> &'static str {
+    session.app().version
 }

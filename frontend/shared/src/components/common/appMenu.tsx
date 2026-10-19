@@ -6,7 +6,7 @@ import {
   EllipsisVerticalIcon,
   InfoIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AboutDialog } from "#components/common/aboutDialog";
 import { Button } from "#components/shadcn/button";
@@ -20,6 +20,7 @@ import {
 
 import { platform } from "#lib/platform";
 import { openExternal } from "#lib/utils";
+import { getAppName } from "#lib/version";
 
 interface AppMenuProps {
   showChangeWorkspace?: boolean;
@@ -27,6 +28,11 @@ interface AppMenuProps {
 
 export function AppMenu({ showChangeWorkspace = false }: AppMenuProps) {
   const [isAboutDialogOpen, setIsAboutDialogOpen] = useState(false);
+  const [appName, setAppName] = useState<string>("");
+
+  useEffect(() => {
+    getAppName().then(setAppName);
+  }, []);
 
   const handleNewWindow = async () => {
     try {
@@ -63,7 +69,7 @@ export function AppMenu({ showChangeWorkspace = false }: AppMenuProps) {
           <BookOpenTextIcon /> Documentation
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setIsAboutDialogOpen(true)}>
-          <InfoIcon /> About Pixi GUI
+          <InfoIcon /> About {appName}
         </DropdownMenuItem>
       </DropdownMenuContent>
 
