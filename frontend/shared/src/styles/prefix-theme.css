@@ -62,7 +62,7 @@
   /**
 	 * typefaces
 	 */
-  --font-display: var(--source-serif-font);
+  --font-display: "Times New Roman", Times, serif;
   --font-body: var(--inter-font);
 
   --text-pfxh-xs: 1.5rem;
