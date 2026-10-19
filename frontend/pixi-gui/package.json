@@ -1,5 +1,5 @@
 {
-  "name": "gui",
+  "name": "pixi-gui",
   "private": true,
   "type": "module",
   "scripts": {

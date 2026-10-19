@@ -46,15 +46,15 @@ react-devtools = { cmd = "pnpm react-devtools", depends-on = [
 ], env = { HOST = "localhost" } }
 
 [tasks.tauri]
-args = [{ arg = "app", choices = ["gui"] }]
+args = [{ arg = "app", choices = ["pixi-gui"] }]
 cmd = "pnpm tauri dev"
 depends-on = ["frontend-install-deps"]
-env = { TAURI_APP_PATH = "crates/pixi-{{ app }}" }
+env = { TAURI_APP_PATH = "crates/{{ app }}" }
 
 [tasks.web]
-args = [{ arg = "app", choices = ["gui"] }]
+args = [{ arg = "app", choices = ["pixi-gui"] }]
 cmd = """concurrently --kill-others --names backend,frontend \
-  'watchexec --socket 127.0.0.1:5174 --restart --watch crates --exts rs,toml -- cargo run -p pixi-{{ app }}-web' \
+  'watchexec --socket 127.0.0.1:5174 --restart --watch crates --exts rs,toml -- cargo run -p {{ app }}-web' \
   'pnpm --filter {{ app }} dev' \
 """
 depends-on = ["frontend-install-deps"]

@@ -3,10 +3,10 @@
   "productName": "Pixi GUI",
   "identifier": "dev.prefix.pixi-gui",
   "build": {
-    "beforeDevCommand": "pnpm --filter gui dev",
-    "beforeBuildCommand": "pnpm --filter gui build",
+    "beforeDevCommand": "pnpm --filter pixi-gui dev",
+    "beforeBuildCommand": "pnpm --filter pixi-gui build",
     "devUrl": "http://localhost:5173",
-    "frontendDist": "../../frontend/gui/dist"
+    "frontendDist": "../../frontend/pixi-gui/dist"
   },
   "app": {
     "withGlobalTauri": true,

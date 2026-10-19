@@ -6,7 +6,7 @@ fn main() {
 
     // Release builds embed the frontend
     if std::env::var_os("CARGO_CFG_DEBUG_ASSERTIONS").is_none() {
-        memory_serve::load_directory("../../frontend/gui/dist");
+        memory_serve::load_directory("../../frontend/pixi-gui/dist");
     }
 }
 fn set_display_name() {
