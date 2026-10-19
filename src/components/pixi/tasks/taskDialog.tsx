@@ -188,7 +188,11 @@ export function TaskDialog({
         const ptys = await listPtys();
         const running = ptys.some((pty) => {
           const kind = pty.invocation.kind;
-          return kind.kind === "task" && kind.task === editTaskName;
+          return (
+            pty.invocation.cwd === workspace.root &&
+            kind.kind === "task" &&
+            kind.task === editTaskName
+          );
         });
 
         setIsTaskRunning(running);
@@ -207,7 +211,7 @@ export function TaskDialog({
     };
 
     checkTaskRunning();
-  }, [isEditMode, open, editTaskName]);
+  }, [isEditMode, open, editTaskName, workspace.root]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
