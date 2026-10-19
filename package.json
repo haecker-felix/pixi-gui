@@ -5,6 +5,28 @@
   "scripts": {
     "tauri": "tauri"
   },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-tailwindcss",
+      "@trivago/prettier-plugin-sort-imports"
+    ],
+    "tailwindStylesheet": "frontend/shared/src/styles/globals.css",
+    "tailwindFunctions": [
+      "clsx",
+      "cva",
+      "cn"
+    ],
+    "importOrder": [
+      "<THIRD_PARTY_MODULES>",
+      "^shared/(.*)$",
+      "^(#|@/)components/(.*)$",
+      "^(#|@/)(assets|hooks|lib|routes|styles)/(.*)$",
+      "^[./]"
+    ],
+    "importOrderSeparation": true,
+    "importOrderSortSpecifiers": true,
+    "quoteProps": "consistent"
+  },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",

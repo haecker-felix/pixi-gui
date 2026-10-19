@@ -94,7 +94,7 @@ cargo-deny = "cargo deny check license --deny warnings"
 license-check = { cmd = "pnpm license-checker --onlyAllow 'Apache-2.0;BSD-3-Clause;MIT;ISC'", depends-on = [
   "frontend-install-deps",
 ] }
-python-typecheck = "mypy ./scripts"
+python-typecheck = "mypy --config-file scripts/mypy.ini ./scripts"
 ruff-format = "ruff format --exit-non-zero-on-format --force-exclude"
 ruff-lint = "ruff check --fix --exit-non-zero-on-fix --force-exclude"
 toml-format = { cmd = "taplo fmt *.toml crates/*/Cargo.toml", env = { RUST_LOG = "warn" } }
