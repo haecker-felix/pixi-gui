@@ -151,6 +151,12 @@ impl Session {
         }
     }
 
+    /// Answers all waiting confirms with "no"
+    pub fn cancel_confirms(&self) {
+        // Dropping the senders resolves the waiting commands with "no"
+        self.confirms.lock().unwrap().clear();
+    }
+
     pub async fn open_workspace(&self, manifest: PathBuf) -> Result<()> {
         // Start watching the workspace manifest
         let mut watcher = self.watcher.lock().await;
@@ -186,8 +192,7 @@ impl Session {
 
     /// Cleans up what an open workspace left behind, without asking
     async fn force_close_workspace(&self) {
-        // Dropping the senders resolves the waiting commands with "no"
-        self.confirms.lock().unwrap().clear();
+        self.cancel_confirms();
 
         // Stop watching the manifest
         if self.watcher.lock().await.take().is_some() {

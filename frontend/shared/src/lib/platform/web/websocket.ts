@@ -1,8 +1,10 @@
+import { v4 as uuidv4 } from "uuid";
+
 // Talks to the backend over a WebSocket
 
-// The connection is the session: commands are sent over it, and the server answers them
-// and sends the events of the session. The server drops the session when the connection
-// is lost, so the page reloads once the server is reachable again.
+// The frontend creates the session id, and keeps it across reloads, so the session
+// can remain active. If the connection is lost, the server keeps the session for a,
+// while so the frontend can connect again.
 
 type EventHandler = (payload: unknown) => void;
 
@@ -33,6 +35,9 @@ const CONNECTION_LOST = "Connection to the server lost";
 
 const token = takeToken();
 const LOGIN_KEY = "login";
+
+const SESSION_KEY = "session";
+const sessionId = takeSessionId();
 
 let socket: WebSocket | null = null;
 let nextId = 0;
@@ -105,11 +110,13 @@ function connect(): WebSocket {
   const login = localStorage.getItem(LOGIN_KEY);
   if (login) params.set("login", login);
 
+  params.set("session", sessionId);
+
   const ws = new WebSocket(`/api/ws?${params}`);
   socket = ws;
 
   ws.onopen = () => {
-    // The server dropped the state of this page while it was disconnected
+    // Events got lost while disconnected, so the page reloads to get the current state
     if (disconnected) {
       window.location.reload();
       return;
@@ -166,4 +173,22 @@ function takeToken(): string | null {
     window.history.replaceState(window.history.state, "", url);
   }
   return token;
+}
+
+/** Returns the session id of the previous page if this is a reload, or a new one */
+function takeSessionId(): string {
+  const id = sessionStorage.getItem(SESSION_KEY) ?? uuidv4();
+  sessionStorage.removeItem(SESSION_KEY);
+
+  // Hands the id over to the next page in this tab, in case this one reloads
+  window.addEventListener("pagehide", () => {
+    sessionStorage.setItem(SESSION_KEY, id);
+  });
+
+  // When restored from the back/forward cache, this page keeps running with its session
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) sessionStorage.removeItem(SESSION_KEY);
+  });
+
+  return id;
 }

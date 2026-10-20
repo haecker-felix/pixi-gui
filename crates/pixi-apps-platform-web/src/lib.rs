@@ -44,6 +44,9 @@ const PING_INTERVAL: Duration = Duration::from_secs(15);
 /// How long a WebSocket may stay silent before it counts as dead
 const PING_TIMEOUT: Duration = Duration::from_mins(1);
 
+/// How long a session waits for its frontend to connect again, before it ends
+const SESSION_GRACE_PERIOD: Duration = Duration::from_secs(30);
+
 pub struct Config {
     pub app: AppInfo,
     pub open_path: &'static str,
@@ -158,8 +161,8 @@ struct LoginClaims {
 #[derive(Clone)]
 struct Server {
     state: State,
-    /// Messages for the WebSocket of each connected session
-    sessions: Arc<Mutex<HashMap<SessionId, mpsc::UnboundedSender<String>>>>,
+    /// Messages for the WebSocket of each session
+    sessions: Arc<Mutex<HashMap<SessionId, mpsc::UnboundedSender<WsMessage>>>>,
     /// Secret in the URL the server prints
     token: Arc<str>,
     /// Signs logins, is stored on disk so logins survive restarts
@@ -247,8 +250,8 @@ impl Server {
         axum::serve(listener, app).await
     }
 
-    /// Handler of `GET /api/ws` - upgrades the request to a WebSocket and starts a session,
-    /// if it has a valid token or login
+    /// Handler of `GET /api/ws`, upgrades the request to a WebSocket and serves the
+    /// session named by `?session=…`, if it has a valid token or login
     async fn handle_ws_upgrade(
         AxumState(server): AxumState<Self>,
         Query(query): Query<HashMap<String, String>>,
@@ -256,6 +259,7 @@ impl Server {
     ) -> Response {
         let token = query.get("token");
         let login = query.get("login");
+        let session = query.get("session");
 
         // Browsers that connect with the token get a new login
         let new_login = if token.is_some_and(|token| server.is_valid_token(token)) {
@@ -266,7 +270,12 @@ impl Server {
             return StatusCode::UNAUTHORIZED.into_response();
         };
 
-        upgrade.on_upgrade(move |socket| server.serve_session(socket, new_login))
+        // The frontend has to name its session
+        let Some(session) = session.filter(|id| !id.is_empty()).cloned() else {
+            return StatusCode::BAD_REQUEST.into_response();
+        };
+
+        upgrade.on_upgrade(move |socket| server.serve_session(socket, session, new_login))
     }
 
     /// Whether the token is the one printed on start. Compares in constant time, so the
@@ -294,27 +303,42 @@ impl Server {
     /// Sends an event to a WebSocket session
     fn send_event(&self, event: Event) {
         let sessions = self.sessions.lock().unwrap();
+
         let Some(sender) = sessions.get(&event.session) else {
             info!("Dropped event {} of closed session", event.name);
             return;
         };
-        let _ = sender.send(serde_json::to_string(&ServerMessage::Event(event)).unwrap());
+
+        let name = event.name;
+        let server_message = serde_json::to_string(&ServerMessage::Event(event)).unwrap();
+
+        if sender.send(WsMessage::Text(server_message.into())).is_err() {
+            info!("Dropped event {name} of disconnected session");
+        }
     }
 
-    /// Serves the WebSocket of a new session until it closes. A session lives as long as
-    /// its WebSocket. When the connection closes, the session is gets dropped as well.
-    /// The frontend reloads the page when it reconnects, which starts a new session.
-    async fn serve_session(self, mut socket: WebSocket, login: Option<String>) {
-        let session: SessionId = Uuid::new_v4().to_string();
+    /// Serves the WebSocket of a session until it closes
+    async fn serve_session(self, mut socket: WebSocket, session: SessionId, login: Option<String>) {
         let (sender, mut receiver) = mpsc::unbounded_channel();
-        self.sessions
+
+        let previous = self
+            .sessions
             .lock()
             .unwrap()
             .insert(session.clone(), sender.clone());
         info!("Session {session} connected");
 
+        // The frontend connected again, e.g. after a reload, and this connection takes over the session.
+        if let Some(previous) = previous {
+            // The previous connection gets closed, in case it's still open
+            let _ = previous.send(WsMessage::Close(None));
+            // Open confirms get answered with "no", as their dialogs were in the previous frontend
+            self.state.session(&session).cancel_confirms();
+        }
+
         if let Some(login) = login {
-            let _ = sender.send(serde_json::to_string(&ServerMessage::Login { login }).unwrap());
+            let server_message = serde_json::to_string(&ServerMessage::Login { login }).unwrap();
+            let _ = sender.send(WsMessage::Text(server_message.into()));
         }
 
         let mut ping = tokio::time::interval(PING_INTERVAL);
@@ -334,9 +358,11 @@ impl Server {
                     }
                 }
                 // Forwards responses and events of this session to the browser
-                Some(server_message) = receiver.recv() => {
-                    let ws_message = WsMessage::Text(server_message.into());
-                    if !Self::send_ws_message(&mut socket, ws_message).await {
+                // Closes the connection when a newer one took over
+                Some(ws_message) = receiver.recv() => {
+                    let close = matches!(ws_message, WsMessage::Close(_));
+
+                    if !Self::send_ws_message(&mut socket, ws_message).await || close {
                         break;
                     }
                 }
@@ -362,8 +388,28 @@ impl Server {
             }
         }
 
+        drop(receiver); // Close the channel, so the session counts as disconnected
+        drop(socket); // Close websocket
         info!("Session {session} disconnected");
-        self.sessions.lock().unwrap().remove(&session);
+
+        // Keeps the session for a while, so the frontend can connect again
+        tokio::time::sleep(SESSION_GRACE_PERIOD).await;
+        {
+            let mut sessions = self.sessions.lock().unwrap();
+
+            // If the frontend connected again in the meantime, the new connection put its own
+            // channel into `sessions` and owns the session now. Then the session stays.
+            if !sessions
+                .get(&session)
+                .is_some_and(|current| current.same_channel(&sender))
+            {
+                return;
+            }
+
+            // ...otherwise the frontend didn't come back, so the session ends
+            sessions.remove(&session);
+        }
+        info!("Session {session} closed");
         self.state.close_session(&session).await;
     }
 
@@ -376,7 +422,7 @@ impl Server {
     fn spawn_command(
         &self,
         session: &SessionId,
-        sender: &mpsc::UnboundedSender<String>,
+        sender: &mpsc::UnboundedSender<WsMessage>,
         frontend_message: FrontendMessage,
     ) {
         let session = self.state.session(session);
@@ -389,7 +435,8 @@ impl Server {
                 id: frontend_message.id,
                 result,
             };
-            let _ = sender.send(serde_json::to_string(&response).unwrap());
+            let server_message = serde_json::to_string(&response).unwrap();
+            let _ = sender.send(WsMessage::Text(server_message.into()));
         });
     }
 
