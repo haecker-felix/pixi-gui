@@ -184,7 +184,9 @@ impl Server {
         let address = listener.local_addr()?;
         let port = address.port();
 
-        let data_dir = dirs::data_dir().unwrap().join(config.app.identifier);
+        let data_dir = dirs::data_dir()
+            .ok_or_else(|| io::Error::other("no data directory found"))?
+            .join(config.app.identifier);
         let key = Self::load_key(&data_dir.join("web-login-key"))?;
 
         let (state, mut events) = State::new(config.app);
