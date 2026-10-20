@@ -9,6 +9,7 @@ use clap::Parser;
 use pixi_apps_backend::app::{PathArg, path_route};
 use pixi_apps_backend::{SessionId, State, dispatch};
 use serde_json::Value;
+use tauri::webview::PageLoadEvent;
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 
 pub use pixi_apps_backend::{AppInfo, app_info};
@@ -89,6 +90,16 @@ pub fn run(config: Config, context: tauri::Context) {
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_notification::init())
     .invoke_handler(tauri::generate_handler![api, window::open_new_window,])
+    .on_page_load(|webview, payload| {
+        if payload.event() == PageLoadEvent::Started {
+            log::info!(
+                "Frontend of session {} loads, cancelling its open confirms",
+                webview.label()
+            );
+            let session = webview.state::<State>().session(webview.label());
+            session.cancel_confirms();
+        }
+    })
     .on_window_event(|window, event| match event {
         // Close the workspace first, which asks the user if it still has running processes
         WindowEvent::CloseRequested { api, .. } => {
