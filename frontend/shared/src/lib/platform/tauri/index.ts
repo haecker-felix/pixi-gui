@@ -14,8 +14,8 @@ export const tauriPlatform: Platform = {
   invoke: tauriIpc.invoke,
   listen: tauriIpc.listen,
 
-  isDisconnected: () => false, // The backend runs in the same process, we're always connected
-  subscribeDisconnected: () => () => {},
+  connectionStatus: () => "connected", // The backend runs in the same process, we're always connected
+  subscribeConnectionStatus: () => () => {},
 
   pickPath: (options) => open({ ...options, multiple: false }),
   openNewWindow: async () => {

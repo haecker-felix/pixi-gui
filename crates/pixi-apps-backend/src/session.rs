@@ -151,6 +151,12 @@ impl Session {
         }
     }
 
+    /// Answers all waiting confirms with "no"
+    pub fn cancel_confirms(&self) {
+        // Dropping the senders resolves the waiting commands with "no"
+        self.confirms.lock().unwrap().clear();
+    }
+
     pub async fn open_workspace(&self, manifest: PathBuf) -> Result<()> {
         // Start watching the workspace manifest
         let mut watcher = self.watcher.lock().await;
@@ -186,8 +192,7 @@ impl Session {
 
     /// Cleans up what an open workspace left behind, without asking
     async fn force_close_workspace(&self) {
-        // Dropping the senders resolves the waiting commands with "no"
-        self.confirms.lock().unwrap().clear();
+        self.cancel_confirms();
 
         // Stop watching the manifest
         if self.watcher.lock().await.take().is_some() {
@@ -207,11 +212,12 @@ impl Session {
         self.exited_ptys.lock().await.clear();
     }
 
-    pub(crate) async fn close_session(&self) {
+    pub async fn close(&self) {
         // Set before the cleanup, so nothing gets added again afterwards
         self.closed.store(true, Ordering::SeqCst);
 
-        // Nobody is left to ask, so this doesn't go through `close_workspace`
+        // The frontend is gone, so the user can't be asked anymore.
+        // Terminate the processes without a confirm.
         self.force_close_workspace().await;
     }
 }

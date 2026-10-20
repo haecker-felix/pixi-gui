@@ -7,8 +7,8 @@ export const webPlatform: Platform = {
   invoke: websocket.invoke,
   listen: websocket.listen,
 
-  isDisconnected: websocket.isDisconnected,
-  subscribeDisconnected: websocket.subscribeDisconnected,
+  connectionStatus: websocket.connectionStatus,
+  subscribeConnectionStatus: websocket.subscribeConnectionStatus,
 
   pickPath: async ({ directory, title, defaultPath }) => {
     const path = await showPrompt(

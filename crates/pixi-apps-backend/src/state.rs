@@ -44,11 +44,9 @@ impl State {
             .clone()
     }
 
-    /// Cleans up after a session has ended
-    pub async fn close_session(&self, id: &SessionId) {
-        let session = self.sessions.lock().unwrap().remove(id);
-        if let Some(session) = session {
-            session.close_session().await;
-        }
+    /// Removes a session after it has ended. The caller has to clean it up with
+    /// `Session::close_session`.
+    pub fn remove_session(&self, id: &SessionId) -> Option<Session> {
+        self.sessions.lock().unwrap().remove(id)
     }
 }

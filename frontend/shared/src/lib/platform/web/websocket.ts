@@ -1,8 +1,12 @@
+import { v4 as uuidv4 } from "uuid";
+
+import type { ConnectionStatus } from "#lib/platform";
+
 // Talks to the backend over a WebSocket
 
-// The connection is the session: commands are sent over it, and the server answers them
-// and sends the events of the session. The server drops the session when the connection
-// is lost, so the page reloads once the server is reachable again.
+// The frontend creates the session id, and keeps it across reloads, so the session
+// can remain active. If the connection is lost, the server keeps the session for a,
+// while so the frontend can connect again.
 
 type EventHandler = (payload: unknown) => void;
 
@@ -29,16 +33,20 @@ interface PendingRequest {
 }
 
 const RECONNECT_DELAY = 5000;
+const CLOSE_UNAUTHORIZED = 4001;
 const CONNECTION_LOST = "Connection to the server lost";
 
 const token = takeToken();
 const LOGIN_KEY = "login";
 
+const SESSION_KEY = "session";
+const sessionId = takeSessionId();
+
 let socket: WebSocket | null = null;
 let nextId = 0;
 
-let disconnected = false;
-const disconnectedListeners = new Set<() => void>();
+let status: ConnectionStatus = "connected";
+const statusListeners = new Set<() => void>();
 
 /** Requests waiting for the connection */
 let queue: string[] = [];
@@ -47,11 +55,15 @@ let queue: string[] = [];
 const pending = new Map<number, PendingRequest>();
 const handlers = new Map<string, Set<EventHandler>>();
 
+/** Whether the session has running processes, so closing the tab asks first */
+let hasRunningProcesses = false;
+let refreshId = 0;
+
 export function invoke<T>(
   cmd: string,
   args?: Record<string, unknown>,
 ): Promise<T> {
-  if (disconnected) return Promise.reject(CONNECTION_LOST);
+  if (status !== "connected") return Promise.reject(CONNECTION_LOST);
 
   return new Promise((resolve, reject) => {
     const id = nextId++;
@@ -85,14 +97,13 @@ export function listen<T>(
   return Promise.resolve(() => set.delete(handler as EventHandler));
 }
 
-/** Whether the connection to the server got lost. */
-export function isDisconnected(): boolean {
-  return disconnected;
+export function connectionStatus(): ConnectionStatus {
+  return status;
 }
 
-export function subscribeDisconnected(listener: () => void): () => void {
-  disconnectedListeners.add(listener);
-  return () => disconnectedListeners.delete(listener);
+export function subscribeConnectionStatus(listener: () => void): () => void {
+  statusListeners.add(listener);
+  return () => statusListeners.delete(listener);
 }
 
 /** Returns the connection, and opens it on first use */
@@ -105,17 +116,24 @@ function connect(): WebSocket {
   const login = localStorage.getItem(LOGIN_KEY);
   if (login) params.set("login", login);
 
+  params.set("session", sessionId);
+
   const ws = new WebSocket(`/api/ws?${params}`);
   socket = ws;
 
   ws.onopen = () => {
-    // The server dropped the state of this page while it was disconnected
-    if (disconnected) {
+    // Events got lost while disconnected, so the page reloads to get the current state
+    if (status === "disconnected") {
       window.location.reload();
       return;
     }
     queue.forEach((request) => ws.send(request));
     queue = [];
+
+    window.addEventListener("beforeunload", (event) => {
+      if (hasRunningProcesses && status === "connected") event.preventDefault();
+    });
+    void refreshRunningProcesses();
   };
 
   ws.onmessage = (message) => {
@@ -136,6 +154,9 @@ function connect(): WebSocket {
       }
       case "event":
         handlers.get(data.name)?.forEach((handler) => handler(data.payload));
+        if (data.name === "pty-start" || data.name === "pty-exit") {
+          void refreshRunningProcesses();
+        }
         break;
       case "login":
         localStorage.setItem(LOGIN_KEY, data.login);
@@ -143,19 +164,38 @@ function connect(): WebSocket {
     }
   };
 
-  ws.onclose = () => {
+  ws.onclose = (event) => {
     socket = null;
-    disconnected = true;
-    disconnectedListeners.forEach((listener) => listener());
+
+    if (event.code === CLOSE_UNAUTHORIZED) {
+      localStorage.removeItem(LOGIN_KEY);
+      status = "unauthorized";
+    } else {
+      status = "disconnected";
+      setTimeout(connect, RECONNECT_DELAY);
+    }
+    statusListeners.forEach((listener) => listener());
 
     // Their responses can't arrive anymore
     pending.forEach((request) => request.reject(CONNECTION_LOST));
     pending.clear();
-
-    setTimeout(connect, RECONNECT_DELAY);
   };
 
   return ws;
+}
+
+/**
+ * Asks the server whether processes are running. Answers can arrive out of order, as
+ * commands run in parallel, so only the answer to the latest request counts.
+ */
+async function refreshRunningProcesses(): Promise<void> {
+  const id = ++refreshId;
+  try {
+    const ptys = await invoke<unknown[]>("pty_list");
+    if (id === refreshId) hasRunningProcesses = ptys.length > 0;
+  } catch {
+    // Keeps the last known state, e.g. while disconnected
+  }
 }
 
 function takeToken(): string | null {
@@ -166,4 +206,22 @@ function takeToken(): string | null {
     window.history.replaceState(window.history.state, "", url);
   }
   return token;
+}
+
+/** Returns the session id of the previous page if this is a reload, or a new one */
+function takeSessionId(): string {
+  const id = sessionStorage.getItem(SESSION_KEY) ?? uuidv4();
+  sessionStorage.removeItem(SESSION_KEY);
+
+  // Hands the id over to the next page in this tab, in case this one reloads
+  window.addEventListener("pagehide", () => {
+    sessionStorage.setItem(SESSION_KEY, id);
+  });
+
+  // When restored from the back/forward cache, this page keeps running with its session
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) sessionStorage.removeItem(SESSION_KEY);
+  });
+
+  return id;
 }
