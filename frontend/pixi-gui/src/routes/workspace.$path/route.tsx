@@ -134,7 +134,7 @@ function WorkspaceLayout() {
         return !(await closeWorkspace());
       return false;
     },
-    // Closing the window gets handled by Tauri
+    // Disable "Leave Site?" prompt, closing the window gets handled by Tauri / by the Websocket transport
     enableBeforeUnload: false,
   });
 

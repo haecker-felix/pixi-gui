@@ -52,6 +52,10 @@ let queue: string[] = [];
 const pending = new Map<number, PendingRequest>();
 const handlers = new Map<string, Set<EventHandler>>();
 
+/** Whether the session has running processes, so closing the tab asks first */
+let hasRunningProcesses = false;
+let refreshId = 0;
+
 export function invoke<T>(
   cmd: string,
   args?: Record<string, unknown>,
@@ -123,6 +127,11 @@ function connect(): WebSocket {
     }
     queue.forEach((request) => ws.send(request));
     queue = [];
+
+    window.addEventListener("beforeunload", (event) => {
+      if (hasRunningProcesses && !disconnected) event.preventDefault();
+    });
+    void refreshRunningProcesses();
   };
 
   ws.onmessage = (message) => {
@@ -143,6 +152,9 @@ function connect(): WebSocket {
       }
       case "event":
         handlers.get(data.name)?.forEach((handler) => handler(data.payload));
+        if (data.name === "pty-start" || data.name === "pty-exit") {
+          void refreshRunningProcesses();
+        }
         break;
       case "login":
         localStorage.setItem(LOGIN_KEY, data.login);
@@ -163,6 +175,20 @@ function connect(): WebSocket {
   };
 
   return ws;
+}
+
+/**
+ * Asks the server whether processes are running. Answers can arrive out of order, as
+ * commands run in parallel, so only the answer to the latest request counts.
+ */
+async function refreshRunningProcesses(): Promise<void> {
+  const id = ++refreshId;
+  try {
+    const ptys = await invoke<unknown[]>("pty_list");
+    if (id === refreshId) hasRunningProcesses = ptys.length > 0;
+  } catch {
+    // Keeps the last known state, e.g. while disconnected
+  }
 }
 
 function takeToken(): string | null {
