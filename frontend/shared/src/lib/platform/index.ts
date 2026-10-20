@@ -26,15 +26,17 @@ export interface Platform {
   invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T>;
   listen<T>(event: string, handler: (payload: T) => void): Promise<() => void>;
 
-  /** Whether the connection to the backend got lost. */
-  isDisconnected(): boolean;
-  subscribeDisconnected(listener: () => void): () => void;
+  /** The state of the connection to the backend */
+  connectionStatus(): ConnectionStatus;
+  subscribeConnectionStatus(listener: () => void): () => void;
 
   pickPath(options: PickPathOptions): Promise<string | null>;
 
   openNewWindow(): Promise<void>;
   desktopNotification(title: string, body: string): Promise<void>;
 }
+
+export type ConnectionStatus = "connected" | "disconnected" | "unauthorized";
 
 export interface PickPathOptions {
   directory?: boolean;

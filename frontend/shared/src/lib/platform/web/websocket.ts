@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 
+import type { ConnectionStatus } from "#lib/platform";
+
 // Talks to the backend over a WebSocket
 
 // The frontend creates the session id, and keeps it across reloads, so the session
@@ -31,6 +33,7 @@ interface PendingRequest {
 }
 
 const RECONNECT_DELAY = 5000;
+const CLOSE_UNAUTHORIZED = 4001;
 const CONNECTION_LOST = "Connection to the server lost";
 
 const token = takeToken();
@@ -42,8 +45,8 @@ const sessionId = takeSessionId();
 let socket: WebSocket | null = null;
 let nextId = 0;
 
-let disconnected = false;
-const disconnectedListeners = new Set<() => void>();
+let status: ConnectionStatus = "connected";
+const statusListeners = new Set<() => void>();
 
 /** Requests waiting for the connection */
 let queue: string[] = [];
@@ -60,7 +63,7 @@ export function invoke<T>(
   cmd: string,
   args?: Record<string, unknown>,
 ): Promise<T> {
-  if (disconnected) return Promise.reject(CONNECTION_LOST);
+  if (status !== "connected") return Promise.reject(CONNECTION_LOST);
 
   return new Promise((resolve, reject) => {
     const id = nextId++;
@@ -94,14 +97,13 @@ export function listen<T>(
   return Promise.resolve(() => set.delete(handler as EventHandler));
 }
 
-/** Whether the connection to the server got lost. */
-export function isDisconnected(): boolean {
-  return disconnected;
+export function connectionStatus(): ConnectionStatus {
+  return status;
 }
 
-export function subscribeDisconnected(listener: () => void): () => void {
-  disconnectedListeners.add(listener);
-  return () => disconnectedListeners.delete(listener);
+export function subscribeConnectionStatus(listener: () => void): () => void {
+  statusListeners.add(listener);
+  return () => statusListeners.delete(listener);
 }
 
 /** Returns the connection, and opens it on first use */
@@ -121,7 +123,7 @@ function connect(): WebSocket {
 
   ws.onopen = () => {
     // Events got lost while disconnected, so the page reloads to get the current state
-    if (disconnected) {
+    if (status === "disconnected") {
       window.location.reload();
       return;
     }
@@ -129,7 +131,7 @@ function connect(): WebSocket {
     queue = [];
 
     window.addEventListener("beforeunload", (event) => {
-      if (hasRunningProcesses && !disconnected) event.preventDefault();
+      if (hasRunningProcesses && status === "connected") event.preventDefault();
     });
     void refreshRunningProcesses();
   };
@@ -162,16 +164,21 @@ function connect(): WebSocket {
     }
   };
 
-  ws.onclose = () => {
+  ws.onclose = (event) => {
     socket = null;
-    disconnected = true;
-    disconnectedListeners.forEach((listener) => listener());
+
+    if (event.code === CLOSE_UNAUTHORIZED) {
+      localStorage.removeItem(LOGIN_KEY);
+      status = "unauthorized";
+    } else {
+      status = "disconnected";
+      setTimeout(connect, RECONNECT_DELAY);
+    }
+    statusListeners.forEach((listener) => listener());
 
     // Their responses can't arrive anymore
     pending.forEach((request) => request.reject(CONNECTION_LOST));
     pending.clear();
-
-    setTimeout(connect, RECONNECT_DELAY);
   };
 
   return ws;

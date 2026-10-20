@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use axum::Router;
-use axum::extract::ws::{Message as WsMessage, WebSocket};
+use axum::extract::ws::{CloseFrame, Message as WsMessage, WebSocket};
 use axum::extract::{Query, State as AxumState, WebSocketUpgrade};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -37,6 +37,9 @@ const LOGIN_DURATION: Duration = Duration::from_hours(30 * 24);
 
 /// Length of the key that signs logins, in bytes
 const KEY_LENGTH: usize = 32;
+
+/// Close code of a WebSocket without valid token or login
+const CLOSE_UNAUTHORIZED: u16 = 4001;
 
 /// How often the server pings each WebSocket
 const PING_INTERVAL: Duration = Duration::from_secs(15);
@@ -267,7 +270,15 @@ impl Server {
         } else if login.is_some_and(|login| server.is_valid_login(login)) {
             None
         } else {
-            return StatusCode::UNAUTHORIZED.into_response();
+            let session = session.map_or("without id", String::as_str);
+            info!("Session {session} rejected, no valid token or login");
+            return upgrade.on_upgrade(|mut socket| async move {
+                let close_frame = CloseFrame {
+                    code: CLOSE_UNAUTHORIZED,
+                    reason: "Unauthorized".into(),
+                };
+                let _ = socket.send(WsMessage::Close(Some(close_frame))).await;
+            });
         };
 
         // The frontend has to name its session
