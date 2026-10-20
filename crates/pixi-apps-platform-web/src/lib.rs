@@ -405,7 +405,7 @@ impl Server {
 
         // Keeps the session for a while, so the frontend can connect again
         tokio::time::sleep(SESSION_GRACE_PERIOD).await;
-        {
+        let removed = {
             let mut sessions = self.sessions.lock().unwrap();
 
             // If the frontend connected again in the meantime, the new connection put its own
@@ -417,11 +417,15 @@ impl Server {
                 return;
             }
 
-            // ...otherwise the frontend didn't come back, so the session ends
+            // ...or the frontend didn't connect again -> the session ends
             sessions.remove(&session);
+            self.state.remove_session(&session)
+        };
+
+        if let Some(removed) = removed {
+            removed.close().await;
+            info!("Session {session} closed");
         }
-        info!("Session {session} closed");
-        self.state.close_session(&session).await;
     }
 
     async fn send_ws_message(socket: &mut WebSocket, ws_message: WsMessage) -> bool {

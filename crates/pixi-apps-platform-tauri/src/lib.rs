@@ -121,9 +121,10 @@ pub fn run(config: Config, context: tauri::Context) {
             });
         }
         WindowEvent::Destroyed => {
-            let state = window.state::<State>().inner().clone();
             let session: SessionId = window.label().to_string();
-            tauri::async_runtime::spawn(async move { state.close_session(&session).await });
+            if let Some(session) = window.state::<State>().remove_session(&session) {
+                tauri::async_runtime::spawn(async move { session.close().await });
+            }
         }
         _ => {}
     })

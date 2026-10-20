@@ -212,11 +212,12 @@ impl Session {
         self.exited_ptys.lock().await.clear();
     }
 
-    pub(crate) async fn close_session(&self) {
+    pub async fn close(&self) {
         // Set before the cleanup, so nothing gets added again afterwards
         self.closed.store(true, Ordering::SeqCst);
 
-        // Nobody is left to ask, so this doesn't go through `close_workspace`
+        // The frontend is gone, so the user can't be asked anymore.
+        // Terminate the processes without a confirm.
         self.force_close_workspace().await;
     }
 }
