@@ -7,10 +7,10 @@ use std::io::{self, ErrorKind, Write};
 use std::net::{IpAddr, Ipv4Addr};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use axum::Router;
-use axum::extract::ws::{Message, WebSocket};
+use axum::extract::ws::{Message as WsMessage, WebSocket};
 use axum::extract::{Query, State as AxumState, WebSocketUpgrade};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -37,6 +37,12 @@ const LOGIN_DURATION: Duration = Duration::from_hours(30 * 24);
 
 /// Length of the key that signs logins, in bytes
 const KEY_LENGTH: usize = 32;
+
+/// How often the server pings each WebSocket
+const PING_INTERVAL: Duration = Duration::from_secs(15);
+
+/// How long a WebSocket may stay silent before it counts as dead
+const PING_TIMEOUT: Duration = Duration::from_mins(1);
 
 pub struct Config {
     pub app: AppInfo,
@@ -288,11 +294,11 @@ impl Server {
     /// Sends an event to a WebSocket session
     fn send_event(&self, event: Event) {
         let sessions = self.sessions.lock().unwrap();
-        let Some(socket) = sessions.get(&event.session) else {
+        let Some(sender) = sessions.get(&event.session) else {
             info!("Dropped event {} of closed session", event.name);
             return;
         };
-        let _ = socket.send(serde_json::to_string(&ServerMessage::Event(event)).unwrap());
+        let _ = sender.send(serde_json::to_string(&ServerMessage::Event(event)).unwrap());
     }
 
     /// Serves the WebSocket of a new session until it closes. A session lives as long as
@@ -311,21 +317,48 @@ impl Server {
             let _ = sender.send(serde_json::to_string(&ServerMessage::Login { login }).unwrap());
         }
 
+        let mut ping = tokio::time::interval(PING_INTERVAL);
+        let mut last_seen = Instant::now();
+
         loop {
             tokio::select! {
-                Some(message) = receiver.recv() => {
-                    if socket.send(Message::Text(message.into())).await.is_err() {
+                // Pings the frontend regularly, and gives up on a connection that stayed silent too long
+                _ = ping.tick() => {
+                    if last_seen.elapsed() > PING_TIMEOUT {
+                        info!("Session {session} timed out");
+                        break;
+                    }
+                    let ws_message = WsMessage::Ping(Default::default());
+                    if !Self::send_ws_message(&mut socket, ws_message).await {
                         break;
                     }
                 }
-                incoming = socket.recv() => match incoming {
-                    Some(Ok(Message::Text(text))) => match serde_json::from_str(&text) {
-                        Ok(message) => self.spawn_command(&session, &sender, message),
-                        Err(err) => info!("Invalid message of session {session}: {err}"),
-                    },
-                    Some(Ok(Message::Close(_))) | Some(Err(_)) | None => break,
-                    Some(Ok(_)) => {}
-                },
+                // Forwards responses and events of this session to the browser
+                Some(server_message) = receiver.recv() => {
+                    let ws_message = WsMessage::Text(server_message.into());
+                    if !Self::send_ws_message(&mut socket, ws_message).await {
+                        break;
+                    }
+                }
+                // Runs the commands the browser sends, until it closes the connection
+                incoming = socket.recv() => {
+                    // Any WebSocket message counts as a sign of life.
+                    last_seen = Instant::now();
+
+                    match incoming {
+                        Some(Ok(WsMessage::Text(text))) => match serde_json::from_str(&text) {
+                            Ok(frontend_message) => {
+                                self.spawn_command(&session, &sender, frontend_message)
+                            }
+                            Err(err) => {
+                                info!("Invalid frontend message of session {session}: {err}")
+                            }
+                        },
+                        Some(Ok(WsMessage::Close(_))) | Some(Err(_)) | None => break,
+                        // Includes the pongs that answer the pings
+                        Some(Ok(_)) => {}
+                    }
+                }
             }
         }
 
@@ -334,21 +367,26 @@ impl Server {
         self.state.close_session(&session).await;
     }
 
+    async fn send_ws_message(socket: &mut WebSocket, ws_message: WsMessage) -> bool {
+        let sent = tokio::time::timeout(PING_TIMEOUT, socket.send(ws_message)).await;
+        matches!(sent, Ok(Ok(())))
+    }
+
     /// Runs a command in the background, so long commands don't block other commands
     fn spawn_command(
         &self,
         session: &SessionId,
         sender: &mpsc::UnboundedSender<String>,
-        message: FrontendMessage,
+        frontend_message: FrontendMessage,
     ) {
         let session = self.state.session(session);
         let sender = sender.clone();
         tokio::spawn(async move {
-            let result = dispatch(session, &message.cmd, message.args)
+            let result = dispatch(session, &frontend_message.cmd, frontend_message.args)
                 .await
                 .map_err(|err| err.to_string());
             let response = ServerMessage::Response {
-                id: message.id,
+                id: frontend_message.id,
                 result,
             };
             let _ = sender.send(serde_json::to_string(&response).unwrap());
