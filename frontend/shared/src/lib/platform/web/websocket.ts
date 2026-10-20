@@ -20,7 +20,8 @@ type ServerMessage =
       id: number;
       result: { Ok: unknown } | { Err: string };
     }
-  | { type: "event"; name: string; payload: unknown };
+  | { type: "event"; name: string; payload: unknown }
+  | { type: "login"; login: string };
 
 interface PendingRequest {
   resolve: (value: unknown) => void;
@@ -29,6 +30,9 @@ interface PendingRequest {
 
 const RECONNECT_DELAY = 5000;
 const CONNECTION_LOST = "Connection to the server lost";
+
+const token = takeToken();
+const LOGIN_KEY = "login";
 
 let socket: WebSocket | null = null;
 let nextId = 0;
@@ -95,7 +99,13 @@ export function subscribeDisconnected(listener: () => void): () => void {
 function connect(): WebSocket {
   if (socket) return socket;
 
-  const ws = new WebSocket("/api/ws");
+  const params = new URLSearchParams();
+  if (token) params.set("token", token);
+
+  const login = localStorage.getItem(LOGIN_KEY);
+  if (login) params.set("login", login);
+
+  const ws = new WebSocket(`/api/ws?${params}`);
   socket = ws;
 
   ws.onopen = () => {
@@ -127,6 +137,9 @@ function connect(): WebSocket {
       case "event":
         handlers.get(data.name)?.forEach((handler) => handler(data.payload));
         break;
+      case "login":
+        localStorage.setItem(LOGIN_KEY, data.login);
+        break;
     }
   };
 
@@ -143,4 +156,14 @@ function connect(): WebSocket {
   };
 
   return ws;
+}
+
+function takeToken(): string | null {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get("token");
+  if (token) {
+    url.searchParams.delete("token");
+    window.history.replaceState(window.history.state, "", url);
+  }
+  return token;
 }
