@@ -104,6 +104,9 @@ outputs:
             - webkit2gtk4.1 >=2.48.5
             - xorg-xorgproto
             - zlib
+    tests:
+      - script:
+          - pixi-gui --version
 
   - package:
       name: pixi-gui-web
@@ -115,3 +118,6 @@ outputs:
         - cargo-bundle-licenses
         - nodejs
         - pnpm
+    tests:
+      - script:
+          - pixi-gui-web --version
