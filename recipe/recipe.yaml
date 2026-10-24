@@ -2,6 +2,7 @@ context:
   version: "${{ env.get('PIXI_APPS_VERSION', default='0.1.0dev') }}"
   exe_suffix: ${{ ".exe" if win else "" }}
   icon_ext: ${{ "icns" if osx else ("ico" if win else "png") }}
+  pnpm: ${{ "pnpm.bat" if win else "pnpm" }}
 
 recipe:
   name: pixi-apps
@@ -38,15 +39,15 @@ build:
           export RUSTFLAGS="-l framework=WebKit"
 
       - |
-        pnpm install
+        ${{ pnpm }} install
         if [[ -f "${crate_dir}/tauri.conf.json" ]]; then
           # Desktop app. Tells the Tauri CLI which app to build.
           export TAURI_APP_PATH="${crate_dir}"
-          pnpm run tauri build --no-bundle
+          ${{ pnpm }} run tauri build --no-bundle
           menu_template=tauri
         else
           # Server, which embeds its frontend, so that has to be built first
-          pnpm --recursive build
+          ${{ pnpm }} --recursive build
           cargo build --release -p "${PKG_NAME}"
           menu_template=web
         fi
