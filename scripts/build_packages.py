@@ -65,11 +65,16 @@ def get_rust_version() -> str:
     rendered = subprocess.run(
         [*RATTLER_BUILD_ARGS, "--render-only", "--with-solve"],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         check=True,
     ).stdout
-    resolved = json.loads(rendered)[0]["finalized_dependencies"]["build"]["resolved"]
-    return str(next(package["version"] for package in resolved if package["name"] == "rust"))
+    # Not every output has build dependencies, e.g. one that inherits them from a staging output
+    return next(
+        str(package["version"])
+        for output in json.loads(rendered)
+        for package in (output["finalized_dependencies"]["build"] or {}).get("resolved", [])
+        if package["name"] == "rust"
+    )
 
 
 if __name__ == "__main__":
