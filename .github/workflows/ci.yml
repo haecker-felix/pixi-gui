@@ -79,7 +79,7 @@ jobs:
           key: rust-${{ steps.rust.outputs.version }}-${{ hashFiles('recipe/recipe.yaml', 'recipe/variants.yaml') }}
           # Rust comes from rattler-build's build environment, not from the CI runner
           add-rust-environment-hash-key: false
-          save-if: true # TEMP: test caching in the PR
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build package
         run: pixi run --environment=packaging build-packages
         env:
@@ -110,7 +110,7 @@ jobs:
           key: rust-${{ steps.rust.outputs.version }}-${{ hashFiles('recipe/recipe.yaml', 'recipe/variants.yaml') }}
           # Rust comes from rattler-build's build environment, not from the CI runner
           add-rust-environment-hash-key: false
-          save-if: true # TEMP: test caching in the PR
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build package
         run: pixi run --environment=packaging build-packages
         env:

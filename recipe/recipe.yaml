@@ -78,8 +78,6 @@ outputs:
             # All apps in one cargo invocation, so their features get unified and shared
             # dependencies only get compiled once. tauri/custom-protocol makes the Tauri
             # apps serve their embedded frontend.
-            # TEMP: log why cargo considers crates dirty, to debug the CI cache
-            export CARGO_LOG=cargo::core::compiler::fingerprint=info
             cargo build --release -p pixi-gui -p pixi-gui-web --features tauri/custom-protocol
 
             cargo_toml_field() {
