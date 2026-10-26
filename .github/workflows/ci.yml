@@ -73,7 +73,7 @@ jobs:
         with:
           workspaces: ". -> output/bld/target-cache"
           key: rust-${{ steps.rust.outputs.version }}-${{ hashFiles('recipe/recipe.yaml', 'recipe/variants.yaml') }}
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          save-if: true # TEMP: test caching in the PR
       - name: Build package
         run: pixi run --environment=packaging build-packages
         env:
@@ -102,7 +102,7 @@ jobs:
         with:
           workspaces: ". -> output/bld/target-cache"
           key: rust-${{ steps.rust.outputs.version }}-${{ hashFiles('recipe/recipe.yaml', 'recipe/variants.yaml') }}
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          save-if: true # TEMP: test caching in the PR
       - name: Build package
         run: pixi run --environment=packaging build-packages
         env:
