@@ -72,7 +72,7 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: ". -> output/bld/target-cache"
-          key: rust-${{ steps.rust.outputs.version }}
+          key: rust-${{ steps.rust.outputs.version }}-${{ hashFiles('recipe/recipe.yaml', 'recipe/variants.yaml') }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build package
         run: pixi run --environment=packaging build-packages
@@ -101,7 +101,7 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: ". -> output/bld/target-cache"
-          key: rust-${{ steps.rust.outputs.version }}
+          key: rust-${{ steps.rust.outputs.version }}-${{ hashFiles('recipe/recipe.yaml', 'recipe/variants.yaml') }}
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build package
         run: pixi run --environment=packaging build-packages
