@@ -30,6 +30,8 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           key: ${{ hashFiles('pixi.lock') }}
+          # Rust comes from pixi, not from the CI runner
+          add-rust-environment-hash-key: false
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Run lint check
         run: pixi run lint
@@ -44,6 +46,8 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           key: ${{ hashFiles('pixi.lock') }}
+          # Rust comes from pixi, not from the CI runner
+          add-rust-environment-hash-key: false
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Run tests
         run: pixi run backend-test
@@ -73,6 +77,8 @@ jobs:
         with:
           workspaces: ". -> output/bld/target-cache"
           key: rust-${{ steps.rust.outputs.version }}-${{ hashFiles('recipe/recipe.yaml', 'recipe/variants.yaml') }}
+          # Rust comes from rattler-build's build environment, not from the CI runner
+          add-rust-environment-hash-key: false
           save-if: true # TEMP: test caching in the PR
       - name: Build package
         run: pixi run --environment=packaging build-packages
@@ -102,6 +108,8 @@ jobs:
         with:
           workspaces: ". -> output/bld/target-cache"
           key: rust-${{ steps.rust.outputs.version }}-${{ hashFiles('recipe/recipe.yaml', 'recipe/variants.yaml') }}
+          # Rust comes from rattler-build's build environment, not from the CI runner
+          add-rust-environment-hash-key: false
           save-if: true # TEMP: test caching in the PR
       - name: Build package
         run: pixi run --environment=packaging build-packages
