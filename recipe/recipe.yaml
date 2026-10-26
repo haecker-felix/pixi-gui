@@ -122,6 +122,10 @@ outputs:
         - bin/pixi-gui${{ exe_suffix }}
         - Menu/pixi-gui_menu.json
         - Menu/pixi-gui.${{ icon_ext }}
+      dynamic_linking:
+        # Part of Windows itself
+        missing_dso_allowlist:
+          - "**/api-ms-win-core-winrt-*.dll"
     about:
       license_file:
         - LICENSE.md
