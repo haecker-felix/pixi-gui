@@ -36,6 +36,7 @@ outputs:
             - cairo
             - expat
             - fontconfig
+            - gdk-pixbuf
             - glib
             - gtk3
             - libsoup
@@ -112,32 +113,19 @@ outputs:
 
   - package:
       name: pixi-gui
-    inherit:
-      from: pixi-apps-build
-      run_exports: false
+    inherit: pixi-apps-build
     requirements:
       build:
-        - ${{ compiler('rust') }}
-        - ${{ compiler('c') }}
         - ${{ stdlib('c') }}
-      host:
-        - if: linux
-          then:
-            - cairo
-            - expat
-            - fontconfig
-            - glib
-            - gtk3
-            - libsoup
-            - pango
-            - webkit2gtk4.1 >=2.48.5
-            - xorg-xorgproto
-            - zlib
     build:
       files:
         - bin/pixi-gui${{ exe_suffix }}
         - Menu/pixi-gui_menu.json
         - Menu/pixi-gui.${{ icon_ext }}
+      dynamic_linking:
+        # Part of Windows itself
+        missing_dso_allowlist:
+          - "**/api-ms-win-core-winrt-*.dll"
     about:
       license_file:
         - LICENSE.md
