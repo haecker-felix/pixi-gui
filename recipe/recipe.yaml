@@ -112,27 +112,7 @@ outputs:
 
   - package:
       name: pixi-gui
-    inherit:
-      from: pixi-apps-build
-      run_exports: false
-    requirements:
-      build:
-        - ${{ compiler('rust') }}
-        - ${{ compiler('c') }}
-        - ${{ stdlib('c') }}
-      host:
-        - if: linux
-          then:
-            - cairo
-            - expat
-            - fontconfig
-            - glib
-            - gtk3
-            - libsoup
-            - pango
-            - webkit2gtk4.1 >=2.48.5
-            - xorg-xorgproto
-            - zlib
+    inherit: pixi-apps-build
     build:
       files:
         - bin/pixi-gui${{ exe_suffix }}
