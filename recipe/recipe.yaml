@@ -36,6 +36,7 @@ outputs:
             - cairo
             - expat
             - fontconfig
+            - gdk-pixbuf
             - glib
             - gtk3
             - libsoup
@@ -113,6 +114,9 @@ outputs:
   - package:
       name: pixi-gui
     inherit: pixi-apps-build
+    requirements:
+      build:
+        - ${{ stdlib('c') }}
     build:
       files:
         - bin/pixi-gui${{ exe_suffix }}
