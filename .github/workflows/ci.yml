@@ -66,7 +66,9 @@ jobs:
       - name: Resolve Rust version
         id: rust
         shell: bash
-        run: echo "version=$(pixi run --environment=packaging build-packages --rust-version)" >> "$GITHUB_OUTPUT"
+        run: |
+          version=$(pixi run --environment=packaging build-packages --rust-version)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: ". -> output/bld/target-cache"
@@ -93,7 +95,9 @@ jobs:
       - name: Resolve Rust version
         id: rust
         shell: bash
-        run: echo "version=$(pixi run --environment=packaging build-packages --rust-version)" >> "$GITHUB_OUTPUT"
+        run: |
+          version=$(pixi run --environment=packaging build-packages --rust-version)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: ". -> output/bld/target-cache"
