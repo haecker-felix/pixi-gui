@@ -14,9 +14,7 @@ c_stdlib_version:
   - if: linux
     # webkit2gtk4.1 requires glibc 2.34
     then: "2.34"
-  - if: osx and x86_64
-    then: "10.13"
-  - if: osx and arm64
+  - if: osx
     then: "11.0"
   - if: win
     then: "2019.11"
