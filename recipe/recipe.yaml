@@ -72,7 +72,7 @@ outputs:
 
             # Frontends from frontend/, each one gets embedded into the Tauri app and
             # its web counterpart, so they have to be built before cargo runs
-            ${{ pnpm }} --filter pixi-gui build
+            ${{ pnpm }} --recursive build
 
             # All apps in one cargo invocation, so their features get unified and shared
             # dependencies only get compiled once. tauri/custom-protocol makes the Tauri
